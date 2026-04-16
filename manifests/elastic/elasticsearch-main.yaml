@@ -1,0 +1,41 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch-main
+  namespace: lab-main
+spec:
+  version: __ES_VERSION__
+  http:
+    tls:
+      certificate:
+        secretName: es-main-tls
+  nodeSets:
+    - name: default
+      count: 1
+      config:
+        node.store.allow_mmap: false
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                requests:
+                  cpu: "500m"
+                  memory: 1Gi
+                limits:
+                  memory: 1Gi
+---
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana-main
+  namespace: lab-main
+spec:
+  version: __ES_VERSION__
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch-main
+  http:
+    tls:
+      certificate:
+        secretName: es-main-tls

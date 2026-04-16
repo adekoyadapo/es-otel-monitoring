@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: es-main
+  namespace: lab-main
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - es-main.__HOST_IP__.sslip.io
+      secretName: es-main-tls
+  rules:
+    - host: es-main.__HOST_IP__.sslip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: elasticsearch-main-es-http
+                port:
+                  number: 9200

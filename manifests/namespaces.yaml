@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab-main
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab-monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: elastic-system

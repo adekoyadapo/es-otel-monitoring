@@ -1,0 +1,41 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch-monitoring
+  namespace: lab-monitoring
+spec:
+  version: __ES_VERSION__
+  http:
+    tls:
+      certificate:
+        secretName: es-monitoring-tls
+  nodeSets:
+    - name: default
+      count: 2
+      config:
+        node.store.allow_mmap: false
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                requests:
+                  cpu: "500m"
+                  memory: 1Gi
+                limits:
+                  memory: 1Gi
+---
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana-monitoring
+  namespace: lab-monitoring
+spec:
+  version: __ES_VERSION__
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch-monitoring
+  http:
+    tls:
+      certificate:
+        secretName: es-monitoring-tls

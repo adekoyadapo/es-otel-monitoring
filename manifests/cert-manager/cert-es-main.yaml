@@ -1,0 +1,35 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: es-main-cert
+  namespace: lab-main
+spec:
+  secretName: es-main-tls
+  issuerRef:
+    name: lab-ca-issuer
+    kind: ClusterIssuer
+  dnsNames:
+    - es-main.__HOST_IP__.sslip.io
+    - kibana-main.__HOST_IP__.sslip.io
+    - elasticsearch-main-es-http.lab-main.svc
+    - elasticsearch-main-es-http.lab-main.svc.cluster.local
+    - kibana-main-kb-http.lab-main.svc
+    - kibana-main-kb-http.lab-main.svc.cluster.local
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: es-monitoring-cert
+  namespace: lab-monitoring
+spec:
+  secretName: es-monitoring-tls
+  issuerRef:
+    name: lab-ca-issuer
+    kind: ClusterIssuer
+  dnsNames:
+    - es-monitoring.__HOST_IP__.sslip.io
+    - kibana-monitoring.__HOST_IP__.sslip.io
+    - elasticsearch-monitoring-es-http.lab-monitoring.svc
+    - elasticsearch-monitoring-es-http.lab-monitoring.svc.cluster.local
+    - kibana-monitoring-kb-http.lab-monitoring.svc
+    - kibana-monitoring-kb-http.lab-monitoring.svc.cluster.local

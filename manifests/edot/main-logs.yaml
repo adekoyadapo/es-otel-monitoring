@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: edot-main-logs
+  namespace: lab-main
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: edot-main-logs
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "namespaces", "nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: edot-main-logs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edot-main-logs
+subjects:
+  - kind: ServiceAccount
+    name: edot-main-logs
+    namespace: lab-main
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edot-main-logs-config
+  namespace: lab-main
+data:
+  config.yaml: |
+    receivers:
+      filelog/elasticsearch:
+        include:
+          - /var/log/containers/*_lab-main_elasticsearch-*.log
+        start_at: beginning
+        include_file_path: true
+
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 256
+      attributes/edot_logs:
+        actions:
+          - key: data_stream.dataset
+            action: upsert
+            value: elasticsearch.logs
+          - key: data_stream.namespace
+            action: upsert
+            value: main
+      k8s_attributes:
+        auth_type: serviceAccount
+        passthrough: false
+        filter:
+          node_from_env_var: KUBE_NODE_NAME
+      resource/main:
+        attributes:
+          - key: service.name
+            action: upsert
+            value: elasticsearch-main
+          - key: service.namespace
+            action: upsert
+            value: lab-main
+          - key: orchestrator.cluster.name
+            action: upsert
+            value: edot-lab
+      batch:
+        send_batch_size: 1024
+        timeout: 5s
+
+    exporters:
+      otlp_grpc/gateway:
+        endpoint: edot-gateway.lab-monitoring.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        logs:
+          receivers: [filelog/elasticsearch]
+          processors: [memory_limiter, attributes/edot_logs, k8s_attributes, resource/main, batch]
+          exporters: [otlp_grpc/gateway]
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: edot-main-logs
+  namespace: lab-main
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: edot-main-logs
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: edot-main-logs
+    spec:
+      serviceAccountName: edot-main-logs
+      containers:
+        - name: edot-main-logs
+          image: docker.elastic.co/elastic-agent/elastic-otel-collector-wolfi:9.3.3
+          args:
+            - --config
+            - /etc/otel/config.yaml
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          ports:
+            - containerPort: 13133
+              name: health
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otel
+            - name: varlogcontainers
+              mountPath: /var/log/containers
+              readOnly: true
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: edot-main-logs-config
+        - name: varlogcontainers
+          hostPath:
+            path: /var/log/containers
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
