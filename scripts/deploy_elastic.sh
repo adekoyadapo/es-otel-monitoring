@@ -9,8 +9,18 @@ export HOST_IP
 ./scripts/cleanup_legacy_resources.sh
 
 kubectl apply -f manifests/namespaces.yaml
-sed "s/__ES_VERSION__/${ES_VERSION}/g" manifests/elastic/elasticsearch-main.yaml | kubectl apply -f -
-sed "s/__ES_VERSION__/${ES_VERSION}/g" manifests/elastic/elasticsearch-monitoring.yaml | kubectl apply -f -
+sed \
+  -e "s/__ES_VERSION__/${ES_VERSION}/g" \
+  -e "s/__MAIN_ES_NODES__/${MAIN_ES_NODES}/g" \
+  -e "s/__MAIN_ES_CPU__/${MAIN_ES_CPU}/g" \
+  -e "s/__MAIN_ES_MEMORY__/${MAIN_ES_MEMORY}/g" \
+  manifests/elastic/elasticsearch-main.yaml | kubectl apply -f -
+sed \
+  -e "s/__ES_VERSION__/${ES_VERSION}/g" \
+  -e "s/__MONITORING_ES_NODES__/${MONITORING_ES_NODES}/g" \
+  -e "s/__MONITORING_ES_CPU__/${MONITORING_ES_CPU}/g" \
+  -e "s/__MONITORING_ES_MEMORY__/${MONITORING_ES_MEMORY}/g" \
+  manifests/elastic/elasticsearch-monitoring.yaml | kubectl apply -f -
 
 sed "s/__HOST_IP__/${HOST_IP}/g" manifests/ingress/ingress-es-main.yaml | kubectl apply -f -
 sed "s/__HOST_IP__/${HOST_IP}/g" manifests/ingress/ingress-kibana-main.yaml | kubectl apply -f -

@@ -82,6 +82,10 @@ The defaults are centralized in [scripts/common.sh](/Users/ade/Documents/github/
   - `make up ES_VERSION=9.3.0`
 - Change the local cluster name:
   - `make up CLUSTER_NAME=edot-dev`
+- Change the main cluster sizing:
+  - `make up MAIN_ES_NODES=2 MAIN_ES_CPU=1 MAIN_ES_MEMORY=2Gi`
+- Change the monitoring cluster sizing:
+  - `make up MONITORING_ES_NODES=3 MONITORING_ES_CPU=1 MONITORING_ES_MEMORY=2Gi`
 
 ## Lifecycle Commands
 
@@ -100,6 +104,11 @@ The defaults are centralized in [scripts/common.sh](/Users/ade/Documents/github/
 - `make reset`
   - recreates the entire environment and runs verification
 
+Sizing defaults:
+
+- main cluster: `MAIN_ES_NODES=1`, `MAIN_ES_CPU=500m`, `MAIN_ES_MEMORY=1Gi`
+- monitoring cluster: `MONITORING_ES_NODES=2`, `MONITORING_ES_CPU=500m`, `MONITORING_ES_MEMORY=1Gi`
+
 ## Endpoints
 
 `HOST_IP` is resolved automatically by `scripts/detect_host_ip.sh`.
@@ -115,18 +124,39 @@ The default local cluster name is `edot-lab`.
 Main cluster:
 
 ```bash
+echo elastic
 kubectl -n lab-main get secret elasticsearch-main-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d; echo
 ```
 
 Monitoring cluster:
 
 ```bash
+echo elastic
 kubectl -n lab-monitoring get secret elasticsearch-monitoring-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d; echo
 ```
 
+`make up` prints the `elastic` username and the resolved password value for both clusters at the end of deployment.
+
 ## Monitoring Cluster Sizing
 
-The monitoring Elasticsearch cluster is configured with a single node set containing `2` nodes. That keeps the topology simple while still making the monitoring side distinct from the main single-node cluster.
+The Elasticsearch sizing is environment-driven so the lab can be scaled without editing manifests.
+
+Defaults:
+
+- main cluster: `1` node, `500m` CPU request, `1Gi` memory request and limit
+- monitoring cluster: `2` nodes, `500m` CPU request, `1Gi` memory request and limit
+
+Example:
+
+```bash
+make up \
+  MAIN_ES_NODES=2 \
+  MAIN_ES_CPU=1 \
+  MAIN_ES_MEMORY=2Gi \
+  MONITORING_ES_NODES=3 \
+  MONITORING_ES_CPU=1 \
+  MONITORING_ES_MEMORY=2Gi
+```
 
 ## Deployment Flow
 
@@ -146,6 +176,7 @@ The monitoring Elasticsearch cluster is configured with a single node set contai
 
 - the main and monitoring ingress endpoints answer over HTTPS
 - the main cluster is reachable with the generated `elastic` credentials
+- the monitoring cluster contains the expected EDOT data streams
 - the monitoring cluster contains metrics documents in `logs-elasticsearch.metrics-main`
 - the monitoring cluster contains log documents in `logs-elasticsearch.logs.otel-main`
 
@@ -161,4 +192,5 @@ curl -sk -u "elastic:${MON_PASS}" "https://es-monitoring.$(./scripts/detect_host
 ## Notes
 
 - `ES_VERSION`, `ECK_VERSION`, and `CLUSTER_NAME` are designed to be easy to override from `make`
+- the Elasticsearch node count, CPU, and memory for both clusters are configurable from `make` or the shell environment
 - the EDOT metrics receiver still uses the built-in collector module name required by the runtime image, but the shipped data stream names are clean and EDOT-focused

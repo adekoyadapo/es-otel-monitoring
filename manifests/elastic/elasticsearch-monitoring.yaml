@@ -11,7 +11,7 @@ spec:
         secretName: es-monitoring-tls
   nodeSets:
     - name: default
-      count: 2
+      count: __MONITORING_ES_NODES__
       config:
         node.store.allow_mmap: false
       podTemplate:
@@ -20,10 +20,10 @@ spec:
             - name: elasticsearch
               resources:
                 requests:
-                  cpu: "500m"
-                  memory: 1Gi
+                  cpu: "__MONITORING_ES_CPU__"
+                  memory: __MONITORING_ES_MEMORY__
                 limits:
-                  memory: 1Gi
+                  memory: __MONITORING_ES_MEMORY__
 ---
 apiVersion: kibana.k8s.elastic.co/v1
 kind: Kibana
