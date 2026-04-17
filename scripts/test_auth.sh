@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+source "$(dirname "$0")/common.sh"
+
 HOST_IP="${HOST_IP:-$(./scripts/detect_host_ip.sh)}"
 MAIN_ES_URL="https://es-main.${HOST_IP}.sslip.io"
 MAIN_KIBANA_URL="https://kibana-main.${HOST_IP}.sslip.io"
@@ -24,32 +26,32 @@ fail() {
   exit 1
 }
 
-echo "[1/7] Waiting for TLS certificates"
+echo "[1/8] Waiting for TLS certificates"
 kubectl -n lab-main wait --for=condition=Ready certificate/es-main-cert --timeout=180s
 kubectl -n lab-monitoring wait --for=condition=Ready certificate/es-monitoring-cert --timeout=180s
 echo "${GREEN}  OK: TLS certificates are ready${RESET}"
 
-echo "[2/7] Verifying main Elasticsearch authentication"
+echo "[2/8] Verifying main Elasticsearch authentication"
 MAIN_ELASTIC_PASSWORD="$(kubectl -n lab-main get secret elasticsearch-main-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d)"
 AUTH_RESP="$(curl -sk -u "elastic:${MAIN_ELASTIC_PASSWORD}" "${MAIN_ES_URL}/_security/_authenticate")"
 echo "${AUTH_RESP}" | grep -q '"username":"elastic"'
 echo "${GREEN}  OK: main Elasticsearch auth succeeded${RESET}"
 
-echo "[3/7] Checking main Kibana ingress"
+echo "[3/8] Checking main Kibana ingress"
 MAIN_KIBANA_CODE="$(curl -sk -o /dev/null -w '%{http_code}' "${MAIN_KIBANA_URL}")"
 if [[ "${MAIN_KIBANA_CODE}" != "200" && "${MAIN_KIBANA_CODE}" != "302" ]]; then
   fail "Main Kibana endpoint check failed. HTTP ${MAIN_KIBANA_CODE}"
 fi
 echo "${GREEN}  OK: main Kibana ingress returned HTTP ${MAIN_KIBANA_CODE}${RESET}"
 
-echo "[4/7] Checking monitoring Kibana ingress"
+echo "[4/8] Checking monitoring Kibana ingress"
 MONITORING_KIBANA_CODE="$(curl -sk -o /dev/null -w '%{http_code}' "${MONITORING_KIBANA_URL}")"
 if [[ "${MONITORING_KIBANA_CODE}" != "200" && "${MONITORING_KIBANA_CODE}" != "302" ]]; then
   fail "Monitoring Kibana endpoint check failed. HTTP ${MONITORING_KIBANA_CODE}"
 fi
 echo "${GREEN}  OK: monitoring Kibana ingress returned HTTP ${MONITORING_KIBANA_CODE}${RESET}"
 
-echo "[5/7] Waiting for EDOT data streams to appear in the monitoring cluster"
+echo "[5/8] Waiting for EDOT data streams to appear in the monitoring cluster"
 MONITORING_ELASTIC_PASSWORD="$(kubectl -n lab-monitoring get secret elasticsearch-monitoring-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d)"
 ES_METRICS_DATASTREAM_PRESENT=0
 ES_LOGS_DATASTREAM_PRESENT=0
@@ -79,16 +81,27 @@ if [[ "${ES_LOGS_DATASTREAM_PRESENT}" -ne 1 ]]; then
 fi
 echo "${GREEN}  OK: expected EDOT data streams are present${RESET}"
 
-echo "[6/7] Verifying metrics documents were shipped"
+echo "[6/8] Verifying metrics documents were shipped"
 if [[ "${ES_METRICS_COUNT:-0}" -le 0 ]]; then
   fail "No Elasticsearch metrics documents were shipped to the monitoring cluster"
 fi
 echo "${GREEN}  OK: metrics data stream has ${ES_METRICS_COUNT} documents${RESET}"
 
-echo "[7/7] Verifying log documents were shipped"
+echo "[7/8] Verifying log documents were shipped"
 if [[ "${ES_LOGS_COUNT:-0}" -le 0 ]]; then
   fail "No Elasticsearch log documents were shipped to the monitoring cluster"
 fi
 echo "${GREEN}  OK: logs data stream has ${ES_LOGS_COUNT} documents${RESET}"
+
+echo "[8/8] Verifying OTEL dashboard import"
+if dashboard_import_supported; then
+  DASHBOARD_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" -H 'kbn-xsrf: true' "${MONITORING_KIBANA_URL}/api/saved_objects/dashboard/${OTEL_MONITORING_DASHBOARD_ID}")"
+  if [[ "${DASHBOARD_CODE}" != "200" ]]; then
+    fail "OTEL dashboard ${OTEL_MONITORING_DASHBOARD_ID} was not imported into monitoring Kibana"
+  fi
+  echo "${GREEN}  OK: OTEL dashboard ${OTEL_MONITORING_DASHBOARD_ID} is present${RESET}"
+else
+  echo "${BLUE}  SKIP: dashboard import not supported for ES_VERSION ${ES_VERSION} (requires >= ${DASHBOARD_IMPORT_MIN_VERSION})${RESET}"
+fi
 
 echo "${GREEN}All tests passed${RESET}"

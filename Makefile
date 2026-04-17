@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 CLUSTER_NAME ?= edot-lab
 HOST_IP ?= $(shell ./scripts/detect_host_ip.sh)
-ES_VERSION ?= 9.2.5
+ES_VERSION ?= 9.3.2
 ECK_VERSION ?= 2.16.1
 MAIN_ES_NODES ?= 1
 MAIN_ES_CPU ?= 500m
@@ -21,12 +21,13 @@ export MONITORING_ES_NODES
 export MONITORING_ES_CPU
 export MONITORING_ES_MEMORY
 
-.PHONY: help up down reset status logs test
+.PHONY: help up down reset status logs test import-dashboard
 
 help:
 	@echo "Targets:"
 	@echo "  make up      Create the local k3d lab and deploy the full EDOT topology"
 	@echo "  make test    Verify ingress, auth, and EDOT metrics/log shipping"
+	@echo "  make import-dashboard  Rebuild and import the OTEL monitoring dashboard"
 	@echo "  make status  Show cluster nodes, pods, ingresses, and certificates"
 	@echo "  make logs    Show useful workload logs for the lab"
 	@echo "  make down    Delete the local k3d lab"
@@ -88,3 +89,6 @@ logs:
 
 test:
 	@./scripts/test_auth.sh
+
+import-dashboard:
+	@bash ./scripts/import_monitoring_dashboard.sh

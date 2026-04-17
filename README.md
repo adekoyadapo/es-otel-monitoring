@@ -19,6 +19,8 @@ This repo is intentionally narrow in scope. It only contains the manifests, scri
   - ECK operator manifests and the main and monitoring Elasticsearch/Kibana resources
 - `manifests/edot`
   - EDOT gateway, Elasticsearch metrics collector, and Elasticsearch logs collector
+- `dashboards`
+  - the generated OTEL monitoring dashboard NDJSON imported into the monitoring Kibana on supported stack versions
 - `manifests/ingress`
   - Ingress resources for both Elasticsearch and Kibana endpoints
 - `manifests/cert-manager`
@@ -57,6 +59,19 @@ The monitoring cluster receives:
 
 - `logs-elasticsearch.metrics-main`
 - `logs-elasticsearch.logs.otel-main`
+
+## Dashboard Assets
+
+- `stack-mon.ndjson`
+  - legacy baseline dashboard export kept intact for comparison and reuse
+- `dashboards/elasticsearch-otel-monitoring-main.ndjson`
+  - generated OTEL-focused dashboard export for this lab, built around `logs-elasticsearch.metrics-main` and `autoops_es.*` fields
+- `scripts/build_otel_dashboard_ndjson.py`
+  - rebuilds the importable OTEL dashboard export
+- `scripts/import_monitoring_dashboard.sh`
+  - imports the OTEL dashboard into the monitoring Kibana when the selected stack version supports it
+
+The OTEL dashboard import is enabled for stack versions `>= 9.3.0`. On lower versions, deployment skips the dashboard import cleanly and `make test` reports that skip instead of failing.
 
 ## Prerequisites
 
@@ -143,6 +158,7 @@ The Elasticsearch sizing is environment-driven so the lab can be scaled without 
 
 Defaults:
 
+- stack version: `9.3.2`
 - main cluster: `1` node, `500m` CPU request, `1Gi` memory request and limit
 - monitoring cluster: `2` nodes, `500m` CPU request, `1Gi` memory request and limit
 
@@ -169,6 +185,7 @@ make up \
 5. clean up resources from older revisions of this lab if they exist
 6. deploy the main and monitoring Elasticsearch/Kibana stacks
 7. create EDOT credentials and deploy the gateway, metrics collector, and logs collector
+8. import the OTEL monitoring dashboard into the monitoring Kibana when `ES_VERSION >= 9.3.0`
 
 ## Verification Flow
 
@@ -179,6 +196,7 @@ make up \
 - the monitoring cluster contains the expected EDOT data streams
 - the monitoring cluster contains metrics documents in `logs-elasticsearch.metrics-main`
 - the monitoring cluster contains log documents in `logs-elasticsearch.logs.otel-main`
+- the OTEL monitoring dashboard exists in the monitoring Kibana on supported stack versions
 
 ## Verification
 

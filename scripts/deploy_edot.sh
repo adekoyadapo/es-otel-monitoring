@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+source "$(dirname "$0")/common.sh"
+
 HOST_IP="${HOST_IP:-$(./scripts/detect_host_ip.sh)}"
 export HOST_IP
 
@@ -113,3 +115,5 @@ kubectl apply -f manifests/edot/main-logs.yaml
 kubectl -n lab-monitoring rollout status deploy/edot-gateway --timeout=300s
 kubectl -n lab-main rollout status deploy/edot-main-metrics --timeout=300s
 kubectl -n lab-main rollout status ds/edot-main-logs --timeout=300s
+
+bash ./scripts/import_monitoring_dashboard.sh
