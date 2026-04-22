@@ -80,8 +80,8 @@ The synthetic workload exists so the OTEL dashboard sees ongoing indexing and se
   - imports three linked dashboards: overview, nodes, and indices
 - `dashboards/elasticsearch-otel-monitoring-main.export.json`
   - structured JSON wrapper for the same dashboard objects, useful for review and source control, but not directly importable through the Kibana Saved Objects UI
-- `presentation/otel-monitoring-presentation.html`
-  - standalone HTML presentation that explains the OTEL architecture, metric flow, dashboards, and operational checks with animated slide-style navigation
+- `docs/index.html`
+  - standalone HTML presentation for GitHub Pages that explains the OTEL architecture, metric flow, dashboards, and operational checks with animated slide-style navigation
 - `scripts/build_otel_dashboard_ndjson.py`
   - rebuilds both the importable NDJSON and the structured JSON wrapper
 - `scripts/convert_saved_objects_export_json.py`
