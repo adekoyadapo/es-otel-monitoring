@@ -88,6 +88,15 @@ create_role_and_user \
   '["edot_metrics_reader"]'
 
 create_role_and_user \
+  "https://es-main.${HOST_IP}.sslip.io" \
+  "${MAIN_ELASTIC_PASSWORD}" \
+  "main_search_load_writer" \
+  "{\"cluster\":[\"monitor\",\"manage_index_templates\"],\"indices\":[{\"names\":[\"${SEARCH_LOAD_STREAM_PREFIX}-*-${SEARCH_LOAD_STREAM_NAMESPACE}\"],\"privileges\":[\"auto_configure\",\"create_doc\",\"read\",\"view_index_metadata\"]}]}" \
+  "main_search_load_writer" \
+  "MainSearchLoad123!" \
+  '["main_search_load_writer"]'
+
+create_role_and_user \
   "https://es-monitoring.${HOST_IP}.sslip.io" \
   "${MONITORING_ELASTIC_PASSWORD}" \
   "edot_ingest_writer" \
@@ -96,10 +105,25 @@ create_role_and_user \
   "EdotIngest123!" \
   '["edot_ingest_writer"]'
 
+create_role_and_user \
+  "https://es-monitoring.${HOST_IP}.sslip.io" \
+  "${MONITORING_ELASTIC_PASSWORD}" \
+  "edot_autoops_tsds_deriver" \
+  '{"cluster":["monitor"],"indices":[{"names":["logs-elasticsearch.metrics-main"],"privileges":["read","view_index_metadata"]},{"names":["metrics-elasticsearch.autoops-main"],"privileges":["auto_configure","create_doc","view_index_metadata"]}]}' \
+  "edot_autoops_tsds_deriver" \
+  "EdotDerive123!" \
+  '["edot_autoops_tsds_deriver"]'
+
 kubectl -n lab-main create secret generic edot-main-source-credentials \
   --from-literal=main-elasticsearch-url="https://elasticsearch-main-es-http.lab-main.svc.cluster.local:9200" \
   --from-literal=main-elasticsearch-username="edot_metrics_reader" \
   --from-literal=main-elasticsearch-password="EdotMetrics123!" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl -n lab-main create secret generic main-search-load-credentials \
+  --from-literal=main-elasticsearch-url="https://elasticsearch-main-es-http.lab-main.svc.cluster.local:9200" \
+  --from-literal=main-elasticsearch-username="main_search_load_writer" \
+  --from-literal=main-elasticsearch-password="MainSearchLoad123!" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n lab-monitoring create secret generic edot-monitoring-credentials \
@@ -108,12 +132,31 @@ kubectl -n lab-monitoring create secret generic edot-monitoring-credentials \
   --from-literal=monitoring-elasticsearch-password="EdotIngest123!" \
   --dry-run=client -o yaml | kubectl apply -f -
 
+kubectl -n lab-monitoring create secret generic edot-autoops-tsds-credentials \
+  --from-literal=monitoring-elasticsearch-url="https://elasticsearch-monitoring-es-http.lab-monitoring.svc.cluster.local:9200" \
+  --from-literal=monitoring-elasticsearch-username="edot_autoops_tsds_deriver" \
+  --from-literal=monitoring-elasticsearch-password="EdotDerive123!" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl -n lab-monitoring create configmap edot-autoops-tsds-script \
+  --from-file=derive_autoops_tsds.py=./scripts/derive_autoops_tsds.py \
+  --dry-run=client -o yaml | kubectl apply -f -
+
 kubectl apply -f manifests/edot/gateway.yaml
 kubectl apply -f manifests/edot/main-metrics.yaml
 kubectl apply -f manifests/edot/main-logs.yaml
+kubectl apply -f manifests/edot/autoops-tsds-deriver.yaml
+bash ./scripts/deploy_search_load.sh
+
+RESET_AUTOOPS_TSDS=true bash ./scripts/install_autoops_tsds_assets.sh
 
 kubectl -n lab-monitoring rollout status deploy/edot-gateway --timeout=300s
 kubectl -n lab-main rollout status deploy/edot-main-metrics --timeout=300s
 kubectl -n lab-main rollout status ds/edot-main-logs --timeout=300s
+kubectl -n lab-main rollout status deploy/main-search-load --timeout=300s
+
+TSDS_BOOTSTRAP_JOB="edot-autoops-tsds-bootstrap-$(date +%s)"
+kubectl -n lab-monitoring create job --from=cronjob/edot-autoops-tsds-deriver "${TSDS_BOOTSTRAP_JOB}"
+kubectl -n lab-monitoring wait --for=condition=complete "job/${TSDS_BOOTSTRAP_JOB}" --timeout=300s
 
 bash ./scripts/import_monitoring_dashboard.sh

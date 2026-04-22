@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: edot-autoops-tsds-deriver
+  namespace: lab-monitoring
+spec:
+  schedule: "*/1 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: deriver
+              image: python:3.11-slim
+              command:
+                - python
+                - /opt/derive/derive_autoops_tsds.py
+              env:
+                - name: ES_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: edot-autoops-tsds-credentials
+                      key: monitoring-elasticsearch-url
+                - name: ES_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: edot-autoops-tsds-credentials
+                      key: monitoring-elasticsearch-username
+                - name: ES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: edot-autoops-tsds-credentials
+                      key: monitoring-elasticsearch-password
+                - name: ES_CA_FILE
+                  value: /etc/otel/certs/ca.crt
+                - name: SOURCE_DATASTREAM
+                  value: logs-elasticsearch.metrics-main
+                - name: DEST_DATASTREAM
+                  value: metrics-elasticsearch.autoops-main
+                - name: LOOKBACK_MINUTES
+                  value: "15"
+              volumeMounts:
+                - name: derive-script
+                  mountPath: /opt/derive
+                  readOnly: true
+                - name: root-ca
+                  mountPath: /etc/otel/certs
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 256Mi
+          volumes:
+            - name: derive-script
+              configMap:
+                name: edot-autoops-tsds-script
+                defaultMode: 0555
+            - name: root-ca
+              secret:
+                secretName: edot-root-ca

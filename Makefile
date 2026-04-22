@@ -10,6 +10,16 @@ MAIN_ES_MEMORY ?= 1Gi
 MONITORING_ES_NODES ?= 2
 MONITORING_ES_CPU ?= 500m
 MONITORING_ES_MEMORY ?= 1Gi
+SEARCH_LOAD_STREAM_PREFIX ?= logs-sampleapp
+SEARCH_LOAD_STREAM_NAMESPACE ?= default
+SEARCH_LOAD_STREAM_COUNT ?= 5
+SEARCH_LOAD_WRITE_BATCH_SIZE ?= 75
+SEARCH_LOAD_SEARCHES_PER_CYCLE ?= 6
+SEARCH_LOAD_SLEEP_SECONDS ?= 5
+SEARCH_LOAD_NUMBER_OF_SHARDS ?= 1
+SEARCH_LOAD_NUMBER_OF_REPLICAS ?= 0
+SEARCH_LOAD_QUERY_SIZE ?= 5
+SEARCH_LOAD_DEPLOYMENT_REPLICAS ?= 1
 export CLUSTER_NAME
 export HOST_IP
 export ES_VERSION
@@ -20,14 +30,27 @@ export MAIN_ES_MEMORY
 export MONITORING_ES_NODES
 export MONITORING_ES_CPU
 export MONITORING_ES_MEMORY
+export SEARCH_LOAD_STREAM_PREFIX
+export SEARCH_LOAD_STREAM_NAMESPACE
+export SEARCH_LOAD_STREAM_COUNT
+export SEARCH_LOAD_WRITE_BATCH_SIZE
+export SEARCH_LOAD_SEARCHES_PER_CYCLE
+export SEARCH_LOAD_SLEEP_SECONDS
+export SEARCH_LOAD_NUMBER_OF_SHARDS
+export SEARCH_LOAD_NUMBER_OF_REPLICAS
+export SEARCH_LOAD_QUERY_SIZE
+export SEARCH_LOAD_DEPLOYMENT_REPLICAS
 
-.PHONY: help up down reset status logs test import-dashboard
+.PHONY: help up down reset status logs test import-dashboard search-load-up search-load-down search-load-reset
 
 help:
 	@echo "Targets:"
 	@echo "  make up      Create the local k3d lab and deploy the full EDOT topology"
 	@echo "  make test    Verify ingress, auth, and EDOT metrics/log shipping"
 	@echo "  make import-dashboard  Rebuild and import the OTEL monitoring dashboard"
+	@echo "  make search-load-up    Deploy or update the synthetic search workload"
+	@echo "  make search-load-down  Stop the synthetic search workload"
+	@echo "  make search-load-reset Delete the synthetic workload data streams and template"
 	@echo "  make status  Show cluster nodes, pods, ingresses, and certificates"
 	@echo "  make logs    Show useful workload logs for the lab"
 	@echo "  make down    Delete the local k3d lab"
@@ -44,6 +67,14 @@ help:
 	@echo "  MONITORING_ES_NODES=<n>   Monitoring Elasticsearch node count"
 	@echo "  MONITORING_ES_CPU=<cpu>   Monitoring Elasticsearch CPU request"
 	@echo "  MONITORING_ES_MEMORY=<m>  Monitoring Elasticsearch memory request and limit"
+	@echo "  SEARCH_LOAD_STREAM_COUNT=<n>         Number of synthetic data streams"
+	@echo "  SEARCH_LOAD_WRITE_BATCH_SIZE=<n>     Bulk write size per cycle"
+	@echo "  SEARCH_LOAD_SEARCHES_PER_CYCLE=<n>   Searches per workload cycle"
+	@echo "  SEARCH_LOAD_SLEEP_SECONDS=<n>        Delay between workload cycles"
+	@echo "  SEARCH_LOAD_NUMBER_OF_SHARDS=<n>     Shards per synthetic logsdb stream"
+	@echo "  SEARCH_LOAD_NUMBER_OF_REPLICAS=<n>   Replicas per synthetic logsdb stream"
+	@echo "  SEARCH_LOAD_QUERY_SIZE=<n>           Search hits requested per query"
+	@echo "  SEARCH_LOAD_DEPLOYMENT_REPLICAS=<n>  Number of workload pods"
 
 up:
 	@./scripts/validate_version.sh
@@ -92,3 +123,12 @@ test:
 
 import-dashboard:
 	@bash ./scripts/import_monitoring_dashboard.sh
+
+search-load-up:
+	@bash ./scripts/deploy_search_load.sh
+
+search-load-down:
+	@bash ./scripts/stop_search_load.sh
+
+search-load-reset:
+	@bash ./scripts/reset_search_load_data.sh

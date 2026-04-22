@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main-search-load
+  namespace: lab-main
+spec:
+  replicas: __SEARCH_LOAD_DEPLOYMENT_REPLICAS__
+  selector:
+    matchLabels:
+      app: main-search-load
+  template:
+    metadata:
+      labels:
+        app: main-search-load
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: generator
+          image: python:3.11-slim
+          command:
+            - python
+            - /opt/load/generate_search_load.py
+          env:
+            - name: ES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: main-search-load-credentials
+                  key: main-elasticsearch-url
+            - name: ES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: main-search-load-credentials
+                  key: main-elasticsearch-username
+            - name: ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: main-search-load-credentials
+                  key: main-elasticsearch-password
+            - name: ES_CA_FILE
+              value: /etc/otel/certs/ca.crt
+            - name: STREAM_PREFIX
+              value: __SEARCH_LOAD_STREAM_PREFIX__
+            - name: STREAM_NAMESPACE
+              value: __SEARCH_LOAD_STREAM_NAMESPACE__
+            - name: STREAM_COUNT
+              value: "__SEARCH_LOAD_STREAM_COUNT__"
+            - name: WRITE_BATCH_SIZE
+              value: "__SEARCH_LOAD_WRITE_BATCH_SIZE__"
+            - name: SEARCHES_PER_CYCLE
+              value: "__SEARCH_LOAD_SEARCHES_PER_CYCLE__"
+            - name: SLEEP_SECONDS
+              value: "__SEARCH_LOAD_SLEEP_SECONDS__"
+            - name: NUMBER_OF_SHARDS
+              value: "__SEARCH_LOAD_NUMBER_OF_SHARDS__"
+            - name: NUMBER_OF_REPLICAS
+              value: "__SEARCH_LOAD_NUMBER_OF_REPLICAS__"
+            - name: QUERY_SIZE
+              value: "__SEARCH_LOAD_QUERY_SIZE__"
+          volumeMounts:
+            - name: load-script
+              mountPath: /opt/load
+              readOnly: true
+            - name: root-ca
+              mountPath: /etc/otel/certs
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: load-script
+          configMap:
+            name: main-search-load-script
+            defaultMode: 0555
+        - name: root-ca
+          secret:
+            secretName: edot-root-ca
