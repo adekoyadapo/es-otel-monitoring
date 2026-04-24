@@ -2,6 +2,7 @@
 set -euo pipefail
 
 source "$(dirname "$0")/common.sh"
+validate_monitoring_mode
 
 HOST_IP="${HOST_IP:-$(./scripts/detect_host_ip.sh)}"
 export HOST_IP
@@ -105,14 +106,16 @@ create_role_and_user \
   "EdotIngest123!" \
   '["edot_ingest_writer"]'
 
-create_role_and_user \
-  "https://es-monitoring.${HOST_IP}.sslip.io" \
-  "${MONITORING_ELASTIC_PASSWORD}" \
-  "edot_autoops_tsds_deriver" \
-  '{"cluster":["monitor"],"indices":[{"names":["logs-elasticsearch.metrics-main"],"privileges":["read","view_index_metadata"]},{"names":["metrics-elasticsearch.autoops-main"],"privileges":["auto_configure","create_doc","view_index_metadata"]}]}' \
-  "edot_autoops_tsds_deriver" \
-  "EdotDerive123!" \
-  '["edot_autoops_tsds_deriver"]'
+if monitoring_mode_autoops; then
+  create_role_and_user \
+    "https://es-monitoring.${HOST_IP}.sslip.io" \
+    "${MONITORING_ELASTIC_PASSWORD}" \
+    "edot_autoops_tsds_deriver" \
+    '{"cluster":["monitor"],"indices":[{"names":["logs-elasticsearch.metrics-main"],"privileges":["read","view_index_metadata"]},{"names":["metrics-elasticsearch.autoops-main"],"privileges":["auto_configure","create_doc","view_index_metadata"]}]}' \
+    "edot_autoops_tsds_deriver" \
+    "EdotDerive123!" \
+    '["edot_autoops_tsds_deriver"]'
+fi
 
 kubectl -n lab-main create secret generic edot-main-source-credentials \
   --from-literal=main-elasticsearch-url="https://elasticsearch-main-es-http.lab-main.svc.cluster.local:9200" \
@@ -132,31 +135,44 @@ kubectl -n lab-monitoring create secret generic edot-monitoring-credentials \
   --from-literal=monitoring-elasticsearch-password="EdotIngest123!" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl -n lab-monitoring create secret generic edot-autoops-tsds-credentials \
-  --from-literal=monitoring-elasticsearch-url="https://elasticsearch-monitoring-es-http.lab-monitoring.svc.cluster.local:9200" \
-  --from-literal=monitoring-elasticsearch-username="edot_autoops_tsds_deriver" \
-  --from-literal=monitoring-elasticsearch-password="EdotDerive123!" \
-  --dry-run=client -o yaml | kubectl apply -f -
+if monitoring_mode_autoops; then
+  kubectl -n lab-monitoring create secret generic edot-autoops-tsds-credentials \
+    --from-literal=monitoring-elasticsearch-url="https://elasticsearch-monitoring-es-http.lab-monitoring.svc.cluster.local:9200" \
+    --from-literal=monitoring-elasticsearch-username="edot_autoops_tsds_deriver" \
+    --from-literal=monitoring-elasticsearch-password="EdotDerive123!" \
+    --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl -n lab-monitoring create configmap edot-autoops-tsds-script \
-  --from-file=derive_autoops_tsds.py=./scripts/derive_autoops_tsds.py \
-  --dry-run=client -o yaml | kubectl apply -f -
+  kubectl -n lab-monitoring create configmap edot-autoops-tsds-script \
+    --from-file=derive_autoops_tsds.py=./scripts/derive_autoops_tsds.py \
+    --dry-run=client -o yaml | kubectl apply -f -
+fi
 
 kubectl apply -f manifests/edot/gateway.yaml
-kubectl apply -f manifests/edot/main-metrics.yaml
 kubectl apply -f manifests/edot/main-logs.yaml
-kubectl apply -f manifests/edot/autoops-tsds-deriver.yaml
+
+if monitoring_mode_contrib; then
+  sed "s|__OTEL_CONTRIB_COLLECTOR_VERSION__|${OTEL_CONTRIB_COLLECTOR_VERSION}|g" manifests/edot/main-metrics-contrib.yaml | kubectl apply -f -
+  kubectl -n lab-monitoring delete cronjob edot-autoops-tsds-deriver --ignore-not-found
+else
+  kubectl apply -f manifests/edot/main-metrics.yaml
+  kubectl apply -f manifests/edot/autoops-tsds-deriver.yaml
+fi
+
 bash ./scripts/deploy_search_load.sh
 
-RESET_AUTOOPS_TSDS=true bash ./scripts/install_autoops_tsds_assets.sh
+if monitoring_mode_autoops; then
+  RESET_AUTOOPS_TSDS=true bash ./scripts/install_autoops_tsds_assets.sh
+fi
 
 kubectl -n lab-monitoring rollout status deploy/edot-gateway --timeout=300s
 kubectl -n lab-main rollout status deploy/edot-main-metrics --timeout=300s
 kubectl -n lab-main rollout status ds/edot-main-logs --timeout=300s
 kubectl -n lab-main rollout status deploy/main-search-load --timeout=300s
 
-TSDS_BOOTSTRAP_JOB="edot-autoops-tsds-bootstrap-$(date +%s)"
-kubectl -n lab-monitoring create job --from=cronjob/edot-autoops-tsds-deriver "${TSDS_BOOTSTRAP_JOB}"
-kubectl -n lab-monitoring wait --for=condition=complete "job/${TSDS_BOOTSTRAP_JOB}" --timeout=300s
+if monitoring_mode_autoops; then
+  TSDS_BOOTSTRAP_JOB="edot-autoops-tsds-bootstrap-$(date +%s)"
+  kubectl -n lab-monitoring create job --from=cronjob/edot-autoops-tsds-deriver "${TSDS_BOOTSTRAP_JOB}"
+  kubectl -n lab-monitoring wait --for=condition=complete "job/${TSDS_BOOTSTRAP_JOB}" --timeout=300s
+fi
 
 bash ./scripts/import_monitoring_dashboard.sh

@@ -10,6 +10,8 @@ MAIN_ES_MEMORY ?= 1Gi
 MONITORING_ES_NODES ?= 2
 MONITORING_ES_CPU ?= 500m
 MONITORING_ES_MEMORY ?= 1Gi
+EDOT_MONITORING_MODE ?= autoops
+OTEL_CONTRIB_COLLECTOR_VERSION ?= 0.148.0
 SEARCH_LOAD_STREAM_PREFIX ?= logs-sampleapp
 SEARCH_LOAD_STREAM_NAMESPACE ?= default
 SEARCH_LOAD_STREAM_COUNT ?= 5
@@ -30,6 +32,8 @@ export MAIN_ES_MEMORY
 export MONITORING_ES_NODES
 export MONITORING_ES_CPU
 export MONITORING_ES_MEMORY
+export EDOT_MONITORING_MODE
+export OTEL_CONTRIB_COLLECTOR_VERSION
 export SEARCH_LOAD_STREAM_PREFIX
 export SEARCH_LOAD_STREAM_NAMESPACE
 export SEARCH_LOAD_STREAM_COUNT
@@ -49,7 +53,7 @@ help:
 	@echo "  make test    Verify ingress, auth, and EDOT metrics/log shipping"
 	@echo "  make import-dashboard  Rebuild and import the OTEL monitoring dashboard"
 	@echo "  make search-load-up    Deploy or update the synthetic search workload"
-	@echo "  make search-load-down  Stop the synthetic search workload"
+	@echo "  make search-load-down  Stop the synthetic search workload and delete its data streams"
 	@echo "  make search-load-reset Delete the synthetic workload data streams and template"
 	@echo "  make status  Show cluster nodes, pods, ingresses, and certificates"
 	@echo "  make logs    Show useful workload logs for the lab"
@@ -67,6 +71,8 @@ help:
 	@echo "  MONITORING_ES_NODES=<n>   Monitoring Elasticsearch node count"
 	@echo "  MONITORING_ES_CPU=<cpu>   Monitoring Elasticsearch CPU request"
 	@echo "  MONITORING_ES_MEMORY=<m>  Monitoring Elasticsearch memory request and limit"
+	@echo "  EDOT_MONITORING_MODE=<m>  Monitoring path: autoops or contrib"
+	@echo "  OTEL_CONTRIB_COLLECTOR_VERSION=<v>  Contrib collector version for contrib mode"
 	@echo "  SEARCH_LOAD_STREAM_COUNT=<n>         Number of synthetic data streams"
 	@echo "  SEARCH_LOAD_WRITE_BATCH_SIZE=<n>     Bulk write size per cycle"
 	@echo "  SEARCH_LOAD_SEARCHES_PER_CYCLE=<n>   Searches per workload cycle"
