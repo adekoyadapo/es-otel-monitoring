@@ -327,7 +327,7 @@ This is an **optional** path for shipping telemetry to **Elastic Observability S
 ### Operational notes
 
 - Helm values default from Elastic Agent `v9.3.3`; override `VALUES_URL` / `CHART_VERSION` in [scripts/install_otlp_kube_stack_managed_motlp.sh](scripts/install_otlp_kube_stack_managed_motlp.sh) if you need a newer stack.
-- **Kibana / Lens on Serverless:** OTEL metrics TSDS exposes dimensions both under `attributes.*` / `resource.attributes.*` (passthrough) and as **root aliases** (`elasticsearch.cluster.name`, `status`, `state`, `operation`, `thread_pool_name`, `cache_name`, `name`, …). The contrib dashboard builder targets those root fields so controls and filters work; after upgrading dashboards, re-run [scripts/import_dashboards_remote_kibana.sh](scripts/import_dashboards_remote_kibana.sh) with `overwrite=true` (or `REBUILD=1` then import).
+- **Kibana / Lens on Serverless:** OTEL metrics TSDS stores filterable dimensions as explicit keywords under `attributes.*` (metric attributes such as `status`, `state`, `operation`, `name`, …) and `resource.attributes.elasticsearch.*` (cluster, node, index). Root ECS-style aliases may work in ES|QL but Lens controls and metric filters must use those full paths; the contrib builder does. After upgrading dashboards, re-run [scripts/import_dashboards_remote_kibana.sh](scripts/import_dashboards_remote_kibana.sh) with `overwrite=true` (or `REBUILD=1` then import).
 - Use **contrib** dashboards (`Elasticsearch OTEL monitoring - Contrib …`) for `elasticsearchreceiver` → `otel-main`. **Agent** dashboards target Elastic Agent stack-monitoring streams and exclude `otel-main` by design. **Autoops** dashboards need the autoops + deriver pipeline into the same project.
 
 ## Configuration Summary

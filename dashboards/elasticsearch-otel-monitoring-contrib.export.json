@@ -39,7 +39,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "status: \"green\" and metrics.elasticsearch.cluster.health:*"
+                        "query": "attributes.status: \"green\" and metrics.elasticsearch.cluster.health:*"
                       },
                       "isBucketed": false,
                       "label": "Green",
@@ -282,7 +282,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "state: \"active\" and metrics.elasticsearch.cluster.shards:*"
+                        "query": "attributes.state: \"active\" and metrics.elasticsearch.cluster.shards:*"
                       },
                       "isBucketed": false,
                       "label": "Active Shards",
@@ -363,7 +363,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "state: \"active_primary\" and metrics.elasticsearch.cluster.shards:*"
+                        "query": "attributes.state: \"active_primary\" and metrics.elasticsearch.cluster.shards:*"
                       },
                       "isBucketed": false,
                       "label": "Primary Shards",
@@ -444,7 +444,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "state: \"unassigned\" and metrics.elasticsearch.cluster.shards:*"
+                        "query": "attributes.state: \"unassigned\" and metrics.elasticsearch.cluster.shards:*"
                       },
                       "isBucketed": false,
                       "label": "Unassigned",
@@ -606,7 +606,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "name: \"request\" and metrics.elasticsearch.breaker.tripped:*"
+                        "query": "attributes.name: \"request\" and metrics.elasticsearch.breaker.tripped:*"
                       },
                       "isBucketed": false,
                       "label": "Request Breakers Total",
@@ -687,7 +687,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "name: \"parent\" and metrics.elasticsearch.breaker.tripped:*"
+                        "query": "attributes.name: \"parent\" and metrics.elasticsearch.breaker.tripped:*"
                       },
                       "isBucketed": false,
                       "label": "Parent Breakers Total",
@@ -863,7 +863,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"query\" and metrics.elasticsearch.node.operations.completed:*"
+                        "query": "attributes.operation: \"query\" and metrics.elasticsearch.node.operations.completed:*"
                       },
                       "isBucketed": false,
                       "label": "Query Ops Total",
@@ -1005,7 +1005,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"fetch\" and metrics.elasticsearch.node.operations.completed:*"
+                        "query": "attributes.operation: \"fetch\" and metrics.elasticsearch.node.operations.completed:*"
                       },
                       "isBucketed": false,
                       "label": "Fetch Ops Total",
@@ -1147,7 +1147,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"index\" and metrics.elasticsearch.node.operations.completed:*"
+                        "query": "attributes.operation: \"index\" and metrics.elasticsearch.node.operations.completed:*"
                       },
                       "isBucketed": false,
                       "label": "Index Ops Total",
@@ -1289,7 +1289,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"refresh\" and metrics.elasticsearch.node.operations.completed:*"
+                        "query": "attributes.operation: \"refresh\" and metrics.elasticsearch.node.operations.completed:*"
                       },
                       "isBucketed": false,
                       "label": "Refresh Ops Total",
@@ -1999,7 +1999,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "thread_pool_name: \"search\" and metrics.elasticsearch.node.thread_pool.tasks.queued:*"
+                        "query": "attributes.thread_pool_name: \"search\" and metrics.elasticsearch.node.thread_pool.tasks.queued:*"
                       },
                       "isBucketed": false,
                       "label": "Search Queue",
@@ -2141,7 +2141,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "thread_pool_name: \"write\" and metrics.elasticsearch.node.thread_pool.tasks.queued:*"
+                        "query": "attributes.thread_pool_name: \"write\" and metrics.elasticsearch.node.thread_pool.tasks.queued:*"
                       },
                       "isBucketed": false,
                       "label": "Write Queue",
@@ -2283,7 +2283,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "cache_name: \"query\" and metrics.elasticsearch.node.cache.memory.usage:*"
+                        "query": "attributes.cache_name: \"query\" and metrics.elasticsearch.node.cache.memory.usage:*"
                       },
                       "isBucketed": false,
                       "label": "Query Cache Memory",
@@ -2425,7 +2425,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "cache_name: \"fielddata\" and metrics.elasticsearch.node.cache.memory.usage:*"
+                        "query": "attributes.cache_name: \"fielddata\" and metrics.elasticsearch.node.cache.memory.usage:*"
                       },
                       "isBucketed": false,
                       "label": "Fielddata Cache Memory",
@@ -2567,7 +2567,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "cache_name: \"query\" and metrics.elasticsearch.node.cache.evictions:*"
+                        "query": "attributes.cache_name: \"query\" and metrics.elasticsearch.node.cache.evictions:*"
                       },
                       "isBucketed": false,
                       "label": "Query Cache Evictions Total",
@@ -2709,7 +2709,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "name: \"young\" and metrics.jvm.gc.collections.elapsed:*"
+                        "query": "attributes.name: \"young\" and metrics.jvm.gc.collections.elapsed:*"
                       },
                       "isBucketed": false,
                       "label": "Young GC Elapsed",
@@ -2851,7 +2851,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "name: \"old\" and metrics.jvm.gc.collections.elapsed:*"
+                        "query": "attributes.name: \"old\" and metrics.jvm.gc.collections.elapsed:*"
                       },
                       "isBucketed": false,
                       "label": "Old GC Elapsed",
@@ -2993,7 +2993,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "name: \"request\" and metrics.elasticsearch.breaker.tripped:*"
+                        "query": "attributes.name: \"request\" and metrics.elasticsearch.breaker.tripped:*"
                       },
                       "isBucketed": false,
                       "label": "Request Breakers",
@@ -3135,7 +3135,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "name: \"parent\" and metrics.elasticsearch.breaker.tripped:*"
+                        "query": "attributes.name: \"parent\" and metrics.elasticsearch.breaker.tripped:*"
                       },
                       "isBucketed": false,
                       "label": "Parent Breakers",
@@ -3277,7 +3277,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "metrics.elasticsearch.index.documents:* and not elasticsearch.index.name: \"_all\""
+                        "query": "metrics.elasticsearch.index.documents:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       },
                       "isBucketed": false,
                       "label": "Docs",
@@ -3419,7 +3419,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "metrics.elasticsearch.index.shards.size:* and not elasticsearch.index.name: \"_all\""
+                        "query": "metrics.elasticsearch.index.shards.size:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       },
                       "isBucketed": false,
                       "label": "Shard Size",
@@ -3561,7 +3561,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "metrics.elasticsearch.index.segments.count:* and not elasticsearch.index.name: \"_all\""
+                        "query": "metrics.elasticsearch.index.segments.count:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       },
                       "isBucketed": false,
                       "label": "Segments",
@@ -3703,7 +3703,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"fetch\" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: \"_all\""
+                        "query": "attributes.operation: \"fetch\" and metrics.elasticsearch.index.operations.completed:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       },
                       "isBucketed": false,
                       "label": "Read Ops Total",
@@ -3845,7 +3845,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"index\" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: \"_all\""
+                        "query": "attributes.operation: \"index\" and metrics.elasticsearch.index.operations.completed:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       },
                       "isBucketed": false,
                       "label": "Write Ops Total",
@@ -4697,7 +4697,7 @@
                       "dataType": "number",
                       "filter": {
                         "language": "kuery",
-                        "query": "metrics.elasticsearch.index.operations.merge.current:* and not elasticsearch.index.name: \"_all\""
+                        "query": "metrics.elasticsearch.index.operations.merge.current:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       },
                       "isBucketed": false,
                       "label": "Merge Current",
@@ -4846,7 +4846,7 @@
                         "size": 3
                       },
                       "scale": "ordinal",
-                      "sourceField": "status"
+                      "sourceField": "attributes.status"
                     },
                     "otel-contrib-lens-health-status-count": {
                       "dataType": "number",
@@ -4986,7 +4986,7 @@
                         "size": 10
                       },
                       "scale": "ordinal",
-                      "sourceField": "elasticsearch.cluster.name"
+                      "sourceField": "resource.attributes.elasticsearch.cluster.name"
                     },
                     "otel-contrib-lens-cluster-info-count": {
                       "dataType": "number",
@@ -5035,7 +5035,7 @@
                       "sourceField": "metrics.elasticsearch.cluster.shards",
                       "filter": {
                         "language": "kuery",
-                        "query": "state: \"active\" and metrics.elasticsearch.cluster.shards:*"
+                        "query": "attributes.state: \"active\" and metrics.elasticsearch.cluster.shards:*"
                       }
                     },
                     "otel-contrib-cluster-unassigned": {
@@ -5048,7 +5048,7 @@
                       "sourceField": "metrics.elasticsearch.cluster.shards",
                       "filter": {
                         "language": "kuery",
-                        "query": "state: \"unassigned\" and metrics.elasticsearch.cluster.shards:*"
+                        "query": "attributes.state: \"unassigned\" and metrics.elasticsearch.cluster.shards:*"
                       }
                     },
                     "otel-contrib-cluster-pending": {
@@ -5201,7 +5201,7 @@
                         "size": 20
                       },
                       "scale": "ordinal",
-                      "sourceField": "elasticsearch.node.name"
+                      "sourceField": "resource.attributes.elasticsearch.node.name"
                     },
                     "otel-contrib-lens-node-summary-count": {
                       "dataType": "number",
@@ -5276,7 +5276,7 @@
                       "sourceField": "metrics.elasticsearch.node.operations.completed",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"query\" and metrics.elasticsearch.node.operations.completed:*"
+                        "query": "attributes.operation: \"query\" and metrics.elasticsearch.node.operations.completed:*"
                       }
                     },
                     "otel-contrib-node-index-rate": {
@@ -5289,7 +5289,7 @@
                       "sourceField": "metrics.elasticsearch.node.operations.completed",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"index\" and metrics.elasticsearch.node.operations.completed:*"
+                        "query": "attributes.operation: \"index\" and metrics.elasticsearch.node.operations.completed:*"
                       }
                     },
                     "otel-contrib-node-disk": {
@@ -5454,7 +5454,7 @@
                         "size": 20
                       },
                       "scale": "ordinal",
-                      "sourceField": "elasticsearch.index.name"
+                      "sourceField": "resource.attributes.elasticsearch.index.name"
                     },
                     "otel-contrib-lens-index-summary-count": {
                       "dataType": "number",
@@ -5477,7 +5477,7 @@
                       "sourceField": "metrics.elasticsearch.index.documents",
                       "filter": {
                         "language": "kuery",
-                        "query": "metrics.elasticsearch.index.documents:* and not elasticsearch.index.name: \"_all\""
+                        "query": "metrics.elasticsearch.index.documents:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       }
                     },
                     "otel-contrib-index-size-table": {
@@ -5490,7 +5490,7 @@
                       "sourceField": "metrics.elasticsearch.index.shards.size",
                       "filter": {
                         "language": "kuery",
-                        "query": "metrics.elasticsearch.index.shards.size:* and not elasticsearch.index.name: \"_all\""
+                        "query": "metrics.elasticsearch.index.shards.size:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       }
                     },
                     "otel-contrib-index-segments-table": {
@@ -5503,7 +5503,7 @@
                       "sourceField": "metrics.elasticsearch.index.segments.count",
                       "filter": {
                         "language": "kuery",
-                        "query": "metrics.elasticsearch.index.segments.count:* and not elasticsearch.index.name: \"_all\""
+                        "query": "metrics.elasticsearch.index.segments.count:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       }
                     },
                     "otel-contrib-index-read-rate-table": {
@@ -5516,7 +5516,7 @@
                       "sourceField": "metrics.elasticsearch.index.operations.completed",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"fetch\" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: \"_all\""
+                        "query": "attributes.operation: \"fetch\" and metrics.elasticsearch.index.operations.completed:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       }
                     },
                     "otel-contrib-index-write-rate-table": {
@@ -5529,7 +5529,7 @@
                       "sourceField": "metrics.elasticsearch.index.operations.completed",
                       "filter": {
                         "language": "kuery",
-                        "query": "operation: \"index\" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: \"_all\""
+                        "query": "attributes.operation: \"index\" and metrics.elasticsearch.index.operations.completed:* and not resource.attributes.elasticsearch.index.name: \"_all\""
                       }
                     }
                   },
@@ -5692,7 +5692,7 @@
           "chainingSystem": "HIERARCHICAL",
           "controlStyle": "oneLine",
           "ignoreParentSettingsJSON": "{\"ignoreFilters\": false, \"ignoreQuery\": false, \"ignoreTimerange\": false, \"ignoreValidations\": false}",
-          "panelsJSON": "{\"otel-contrib-control-cluster\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.cluster.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Cluster Name(s)\"}, \"grow\": false, \"order\": 0, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-node\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.node.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Node(s)\"}, \"grow\": true, \"order\": 1, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-index\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.index.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Index(s)\"}, \"grow\": true, \"order\": 2, \"type\": \"optionsListControl\", \"width\": \"large\"}}",
+          "panelsJSON": "{\"otel-contrib-control-cluster\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"resource.attributes.elasticsearch.cluster.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Cluster Name(s)\"}, \"grow\": false, \"order\": 0, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-node\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"resource.attributes.elasticsearch.node.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Node(s)\"}, \"grow\": true, \"order\": 1, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-index\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"resource.attributes.elasticsearch.index.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Index(s)\"}, \"grow\": true, \"order\": 2, \"type\": \"optionsListControl\", \"width\": \"large\"}}",
           "showApplySelections": false
         },
         "title": "Elasticsearch OTEL monitoring for metrics-elasticsearch.stack_monitoring.otel-main",
@@ -5826,7 +5826,7 @@
           "chainingSystem": "HIERARCHICAL",
           "controlStyle": "oneLine",
           "ignoreParentSettingsJSON": "{\"ignoreFilters\": false, \"ignoreQuery\": false, \"ignoreTimerange\": false, \"ignoreValidations\": false}",
-          "panelsJSON": "{\"otel-contrib-control-cluster\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.cluster.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Cluster Name(s)\"}, \"grow\": false, \"order\": 0, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-node\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.node.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Node(s)\"}, \"grow\": true, \"order\": 1, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-index\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.index.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Index(s)\"}, \"grow\": true, \"order\": 2, \"type\": \"optionsListControl\", \"width\": \"large\"}}",
+          "panelsJSON": "{\"otel-contrib-control-cluster\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"resource.attributes.elasticsearch.cluster.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Cluster Name(s)\"}, \"grow\": false, \"order\": 0, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-node\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"resource.attributes.elasticsearch.node.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Node(s)\"}, \"grow\": true, \"order\": 1, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-index\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"resource.attributes.elasticsearch.index.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Index(s)\"}, \"grow\": true, \"order\": 2, \"type\": \"optionsListControl\", \"width\": \"large\"}}",
           "showApplySelections": false
         },
         "title": "Elasticsearch OTEL monitoring - Contrib Nodes",
@@ -5955,7 +5955,7 @@
           "chainingSystem": "HIERARCHICAL",
           "controlStyle": "oneLine",
           "ignoreParentSettingsJSON": "{\"ignoreFilters\": false, \"ignoreQuery\": false, \"ignoreTimerange\": false, \"ignoreValidations\": false}",
-          "panelsJSON": "{\"otel-contrib-control-cluster\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.cluster.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Cluster Name(s)\"}, \"grow\": false, \"order\": 0, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-node\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.node.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Node(s)\"}, \"grow\": true, \"order\": 1, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-index\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.index.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Index(s)\"}, \"grow\": true, \"order\": 2, \"type\": \"optionsListControl\", \"width\": \"large\"}}",
+          "panelsJSON": "{\"otel-contrib-control-cluster\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"resource.attributes.elasticsearch.cluster.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Cluster Name(s)\"}, \"grow\": false, \"order\": 0, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-node\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"resource.attributes.elasticsearch.node.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Node(s)\"}, \"grow\": true, \"order\": 1, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-contrib-control-index\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-contrib-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"resource.attributes.elasticsearch.index.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Index(s)\"}, \"grow\": true, \"order\": 2, \"type\": \"optionsListControl\", \"width\": \"large\"}}",
           "showApplySelections": false
         },
         "title": "Elasticsearch OTEL monitoring - Contrib Indices",
