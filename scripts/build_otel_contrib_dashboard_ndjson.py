@@ -9,10 +9,10 @@ DASHBOARD_ID = "otel-elasticsearch-monitoring-contrib"
 NODES_DASHBOARD_ID = "otel-elasticsearch-monitoring-contrib-nodes"
 INDICES_DASHBOARD_ID = "otel-elasticsearch-monitoring-contrib-indices"
 LINKS_ID = "otel-elasticsearch-monitoring-contrib-links"
-# OTEL metrics TSDS on Elastic Cloud maps ES resource attrs under `resource.attributes.*`
-# (passthrough) and also exposes ECS-style **root** aliases `elasticsearch.*`. Kibana Lens
-# controls/filters often fail on `resource.attributes.elasticsearch.*` ("cannot be used for
-# filtering"); use the root aliases for controls and KQL.
+# OTEL metrics TSDS on Elastic Cloud stores many OTEL dimensions both under `attributes.*`
+# (passthrough) and as root aliases (`status`, `state`, `operation`, `name`, etc.). Kibana
+# Lens controls and breakdowns should use the **root** names for filtering; see also
+# `elasticsearch.cluster.name` / `elasticsearch.node.name` / `elasticsearch.index.name` above.
 ES_CLUSTER_NAME = "elasticsearch.cluster.name"
 ES_NODE_NAME = "elasticsearch.node.name"
 ES_INDEX_NAME = "elasticsearch.index.name"
@@ -493,38 +493,38 @@ def build_objects():
     ]
 
     lens_objects = [
-        metric_lens("otel-contrib-lens-green-health", "Green", "metrics.elasticsearch.cluster.health", 'attributes.status: "green" and metrics.elasticsearch.cluster.health:*'),
+        metric_lens("otel-contrib-lens-green-health", "Green", "metrics.elasticsearch.cluster.health", 'status: "green" and metrics.elasticsearch.cluster.health:*'),
         metric_lens("otel-contrib-lens-nodes", "Nodes", "metrics.elasticsearch.cluster.nodes", "metrics.elasticsearch.cluster.nodes:*"),
         metric_lens("otel-contrib-lens-data-nodes", "Data Nodes", "metrics.elasticsearch.cluster.data_nodes", "metrics.elasticsearch.cluster.data_nodes:*"),
-        metric_lens("otel-contrib-lens-active-shards", "Active Shards", "metrics.elasticsearch.cluster.shards", 'attributes.state: "active" and metrics.elasticsearch.cluster.shards:*'),
-        metric_lens("otel-contrib-lens-primary-shards", "Primary Shards", "metrics.elasticsearch.cluster.shards", 'attributes.state: "active_primary" and metrics.elasticsearch.cluster.shards:*'),
-        metric_lens("otel-contrib-lens-unassigned-shards", "Unassigned", "metrics.elasticsearch.cluster.shards", 'attributes.state: "unassigned" and metrics.elasticsearch.cluster.shards:*'),
+        metric_lens("otel-contrib-lens-active-shards", "Active Shards", "metrics.elasticsearch.cluster.shards", 'state: "active" and metrics.elasticsearch.cluster.shards:*'),
+        metric_lens("otel-contrib-lens-primary-shards", "Primary Shards", "metrics.elasticsearch.cluster.shards", 'state: "active_primary" and metrics.elasticsearch.cluster.shards:*'),
+        metric_lens("otel-contrib-lens-unassigned-shards", "Unassigned", "metrics.elasticsearch.cluster.shards", 'state: "unassigned" and metrics.elasticsearch.cluster.shards:*'),
         metric_lens("otel-contrib-lens-pending-tasks", "Pending Tasks", "metrics.elasticsearch.cluster.pending_tasks", "metrics.elasticsearch.cluster.pending_tasks:*"),
-        metric_lens("otel-contrib-lens-overview-request-breakers", "Request Breakers Total", "metrics.elasticsearch.breaker.tripped", 'attributes.name: "request" and metrics.elasticsearch.breaker.tripped:*', "max"),
-        metric_lens("otel-contrib-lens-overview-parent-breakers", "Parent Breakers Total", "metrics.elasticsearch.breaker.tripped", 'attributes.name: "parent" and metrics.elasticsearch.breaker.tripped:*', "max"),
+        metric_lens("otel-contrib-lens-overview-request-breakers", "Request Breakers Total", "metrics.elasticsearch.breaker.tripped", 'name: "request" and metrics.elasticsearch.breaker.tripped:*', "max"),
+        metric_lens("otel-contrib-lens-overview-parent-breakers", "Parent Breakers Total", "metrics.elasticsearch.breaker.tripped", 'name: "parent" and metrics.elasticsearch.breaker.tripped:*', "max"),
         metric_lens("otel-contrib-lens-overview-ingest-failures", "Ingest Failures Total", "metrics.elasticsearch.node.ingest.operations.failed", "metrics.elasticsearch.node.ingest.operations.failed:*", "max"),
-        xy_lens("otel-contrib-lens-query-rate", "Query Ops Total", "metrics.elasticsearch.node.operations.completed", 'attributes.operation: "query" and metrics.elasticsearch.node.operations.completed:*', "max", "#348888"),
-        xy_lens("otel-contrib-lens-fetch-rate", "Fetch Ops Total", "metrics.elasticsearch.node.operations.completed", 'attributes.operation: "fetch" and metrics.elasticsearch.node.operations.completed:*', "max", "#4f86c6"),
-        xy_lens("otel-contrib-lens-index-rate", "Index Ops Total", "metrics.elasticsearch.node.operations.completed", 'attributes.operation: "index" and metrics.elasticsearch.node.operations.completed:*', "max", "#d17c2d"),
-        xy_lens("otel-contrib-lens-refresh-rate", "Refresh Ops Total", "metrics.elasticsearch.node.operations.completed", 'attributes.operation: "refresh" and metrics.elasticsearch.node.operations.completed:*', "max", "#8e6db0"),
+        xy_lens("otel-contrib-lens-query-rate", "Query Ops Total", "metrics.elasticsearch.node.operations.completed", 'operation: "query" and metrics.elasticsearch.node.operations.completed:*', "max", "#348888"),
+        xy_lens("otel-contrib-lens-fetch-rate", "Fetch Ops Total", "metrics.elasticsearch.node.operations.completed", 'operation: "fetch" and metrics.elasticsearch.node.operations.completed:*', "max", "#4f86c6"),
+        xy_lens("otel-contrib-lens-index-rate", "Index Ops Total", "metrics.elasticsearch.node.operations.completed", 'operation: "index" and metrics.elasticsearch.node.operations.completed:*', "max", "#d17c2d"),
+        xy_lens("otel-contrib-lens-refresh-rate", "Refresh Ops Total", "metrics.elasticsearch.node.operations.completed", 'operation: "refresh" and metrics.elasticsearch.node.operations.completed:*', "max", "#8e6db0"),
         xy_lens("otel-contrib-lens-heap-used", "Heap Used", "metrics.jvm.memory.heap.used", "metrics.jvm.memory.heap.used:*", "average", "#2f9c95"),
         xy_lens("otel-contrib-lens-heap-max", "Heap Max", "metrics.jvm.memory.heap.max", "metrics.jvm.memory.heap.max:*", "average", "#5f9ea0"),
         xy_lens("otel-contrib-lens-open-files", "Open Files", "metrics.elasticsearch.node.open_files", "metrics.elasticsearch.node.open_files:*", "max", "#6a8caf"),
         xy_lens("otel-contrib-lens-disk-available", "Disk Available", "metrics.elasticsearch.node.fs.disk.available", "metrics.elasticsearch.node.fs.disk.available:*", "sum", "#7aa95c"),
-        xy_lens("otel-contrib-lens-search-queue", "Search Queue", "metrics.elasticsearch.node.thread_pool.tasks.queued", 'attributes.thread_pool_name: "search" and metrics.elasticsearch.node.thread_pool.tasks.queued:*', "average", "#7b6fd0"),
-        xy_lens("otel-contrib-lens-write-queue", "Write Queue", "metrics.elasticsearch.node.thread_pool.tasks.queued", 'attributes.thread_pool_name: "write" and metrics.elasticsearch.node.thread_pool.tasks.queued:*', "average", "#d17c2d"),
-        xy_lens("otel-contrib-lens-query-cache-memory", "Query Cache Memory", "metrics.elasticsearch.node.cache.memory.usage", 'attributes.cache_name: "query" and metrics.elasticsearch.node.cache.memory.usage:*', "average", "#2d7a78"),
-        xy_lens("otel-contrib-lens-fielddata-cache-memory", "Fielddata Cache Memory", "metrics.elasticsearch.node.cache.memory.usage", 'attributes.cache_name: "fielddata" and metrics.elasticsearch.node.cache.memory.usage:*', "average", "#9c6b2f"),
-        xy_lens("otel-contrib-lens-query-cache-evictions", "Query Cache Evictions Total", "metrics.elasticsearch.node.cache.evictions", 'attributes.cache_name: "query" and metrics.elasticsearch.node.cache.evictions:*', "max", "#b85450"),
-        xy_lens("otel-contrib-lens-young-gc", "Young GC Elapsed", "metrics.jvm.gc.collections.elapsed", 'attributes.name: "young" and metrics.jvm.gc.collections.elapsed:*', "max", "#b0922e"),
-        xy_lens("otel-contrib-lens-old-gc", "Old GC Elapsed", "metrics.jvm.gc.collections.elapsed", 'attributes.name: "old" and metrics.jvm.gc.collections.elapsed:*', "max", "#7b4f9e"),
-        xy_lens("otel-contrib-lens-request-breakers", "Request Breakers", "metrics.elasticsearch.breaker.tripped", 'attributes.name: "request" and metrics.elasticsearch.breaker.tripped:*', "max", "#c2574c"),
-        xy_lens("otel-contrib-lens-parent-breakers", "Parent Breakers", "metrics.elasticsearch.breaker.tripped", 'attributes.name: "parent" and metrics.elasticsearch.breaker.tripped:*', "max", "#8c3a3a"),
+        xy_lens("otel-contrib-lens-search-queue", "Search Queue", "metrics.elasticsearch.node.thread_pool.tasks.queued", 'thread_pool_name: "search" and metrics.elasticsearch.node.thread_pool.tasks.queued:*', "average", "#7b6fd0"),
+        xy_lens("otel-contrib-lens-write-queue", "Write Queue", "metrics.elasticsearch.node.thread_pool.tasks.queued", 'thread_pool_name: "write" and metrics.elasticsearch.node.thread_pool.tasks.queued:*', "average", "#d17c2d"),
+        xy_lens("otel-contrib-lens-query-cache-memory", "Query Cache Memory", "metrics.elasticsearch.node.cache.memory.usage", 'cache_name: "query" and metrics.elasticsearch.node.cache.memory.usage:*', "average", "#2d7a78"),
+        xy_lens("otel-contrib-lens-fielddata-cache-memory", "Fielddata Cache Memory", "metrics.elasticsearch.node.cache.memory.usage", 'cache_name: "fielddata" and metrics.elasticsearch.node.cache.memory.usage:*', "average", "#9c6b2f"),
+        xy_lens("otel-contrib-lens-query-cache-evictions", "Query Cache Evictions Total", "metrics.elasticsearch.node.cache.evictions", 'cache_name: "query" and metrics.elasticsearch.node.cache.evictions:*', "max", "#b85450"),
+        xy_lens("otel-contrib-lens-young-gc", "Young GC Elapsed", "metrics.jvm.gc.collections.elapsed", 'name: "young" and metrics.jvm.gc.collections.elapsed:*', "max", "#b0922e"),
+        xy_lens("otel-contrib-lens-old-gc", "Old GC Elapsed", "metrics.jvm.gc.collections.elapsed", 'name: "old" and metrics.jvm.gc.collections.elapsed:*', "max", "#7b4f9e"),
+        xy_lens("otel-contrib-lens-request-breakers", "Request Breakers", "metrics.elasticsearch.breaker.tripped", 'name: "request" and metrics.elasticsearch.breaker.tripped:*', "max", "#c2574c"),
+        xy_lens("otel-contrib-lens-parent-breakers", "Parent Breakers", "metrics.elasticsearch.breaker.tripped", 'name: "parent" and metrics.elasticsearch.breaker.tripped:*', "max", "#8c3a3a"),
         xy_lens("otel-contrib-lens-index-docs", "Docs", "metrics.elasticsearch.index.documents", 'metrics.elasticsearch.index.documents:* and not elasticsearch.index.name: "_all"', "max", "#4f86c6"),
         xy_lens("otel-contrib-lens-index-size", "Shard Size", "metrics.elasticsearch.index.shards.size", 'metrics.elasticsearch.index.shards.size:* and not elasticsearch.index.name: "_all"', "max", "#7aa95c"),
         xy_lens("otel-contrib-lens-index-segments", "Segments", "metrics.elasticsearch.index.segments.count", 'metrics.elasticsearch.index.segments.count:* and not elasticsearch.index.name: "_all"', "max", "#7b6fd0"),
-        xy_lens("otel-contrib-lens-index-read-rate", "Read Ops Total", "metrics.elasticsearch.index.operations.completed", 'attributes.operation: "fetch" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: "_all"', "max", "#4f86c6"),
-        xy_lens("otel-contrib-lens-index-write-rate", "Write Ops Total", "metrics.elasticsearch.index.operations.completed", 'attributes.operation: "index" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: "_all"', "max", "#d17c2d"),
+        xy_lens("otel-contrib-lens-index-read-rate", "Read Ops Total", "metrics.elasticsearch.index.operations.completed", 'operation: "fetch" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: "_all"', "max", "#4f86c6"),
+        xy_lens("otel-contrib-lens-index-write-rate", "Write Ops Total", "metrics.elasticsearch.index.operations.completed", 'operation: "index" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: "_all"', "max", "#d17c2d"),
         xy_lens("otel-contrib-lens-state-queue", "State Queue", "metrics.elasticsearch.cluster.state_queue", "metrics.elasticsearch.cluster.state_queue:*", "max", "#7f8c8d"),
         xy_lens("otel-contrib-lens-in-flight-fetch", "In-Flight Fetch", "metrics.elasticsearch.cluster.in_flight_fetch", "metrics.elasticsearch.cluster.in_flight_fetch:*", "max", "#5e81ac"),
         xy_lens("otel-contrib-lens-jvm-threads", "JVM Threads", "metrics.jvm.threads.count", "metrics.jvm.threads.count:*", "max", "#6d8b74"),
@@ -534,7 +534,7 @@ def build_objects():
         datatable_lens(
             "otel-contrib-lens-health-status",
             "Cluster Health",
-            "attributes.status",
+            "status",
             "Status",
             3,
             [
@@ -550,8 +550,8 @@ def build_objects():
             [
                 {"id": "otel-contrib-cluster-nodes", "label": "Nodes", "operation": "max", "field": "metrics.elasticsearch.cluster.nodes", "filter": "metrics.elasticsearch.cluster.nodes:*"},
                 {"id": "otel-contrib-cluster-data", "label": "Data Nodes", "operation": "max", "field": "metrics.elasticsearch.cluster.data_nodes", "filter": "metrics.elasticsearch.cluster.data_nodes:*"},
-                {"id": "otel-contrib-cluster-active", "label": "Active Shards", "operation": "max", "field": "metrics.elasticsearch.cluster.shards", "filter": 'attributes.state: "active" and metrics.elasticsearch.cluster.shards:*', "width": 130},
-                {"id": "otel-contrib-cluster-unassigned", "label": "Unassigned", "operation": "max", "field": "metrics.elasticsearch.cluster.shards", "filter": 'attributes.state: "unassigned" and metrics.elasticsearch.cluster.shards:*'},
+                {"id": "otel-contrib-cluster-active", "label": "Active Shards", "operation": "max", "field": "metrics.elasticsearch.cluster.shards", "filter": 'state: "active" and metrics.elasticsearch.cluster.shards:*', "width": 130},
+                {"id": "otel-contrib-cluster-unassigned", "label": "Unassigned", "operation": "max", "field": "metrics.elasticsearch.cluster.shards", "filter": 'state: "unassigned" and metrics.elasticsearch.cluster.shards:*'},
                 {"id": "otel-contrib-cluster-pending", "label": "Pending", "operation": "max", "field": "metrics.elasticsearch.cluster.pending_tasks", "filter": "metrics.elasticsearch.cluster.pending_tasks:*"},
             ],
         ),
@@ -566,8 +566,8 @@ def build_objects():
                 {"id": "otel-contrib-node-heap-max", "label": "Heap Max", "operation": "max", "field": "metrics.jvm.memory.heap.max", "filter": "metrics.jvm.memory.heap.max:*", "width": 130},
                 {"id": "otel-contrib-node-open-files", "label": "Open Files", "operation": "max", "field": "metrics.elasticsearch.node.open_files", "filter": "metrics.elasticsearch.node.open_files:*"},
                 {"id": "otel-contrib-node-http", "label": "HTTP Conns", "operation": "max", "field": "metrics.elasticsearch.node.http.connections", "filter": "metrics.elasticsearch.node.http.connections:*"},
-                {"id": "otel-contrib-node-query-rate", "label": "Query Total", "operation": "max", "field": "metrics.elasticsearch.node.operations.completed", "filter": 'attributes.operation: "query" and metrics.elasticsearch.node.operations.completed:*'},
-                {"id": "otel-contrib-node-index-rate", "label": "Index Total", "operation": "max", "field": "metrics.elasticsearch.node.operations.completed", "filter": 'attributes.operation: "index" and metrics.elasticsearch.node.operations.completed:*'},
+                {"id": "otel-contrib-node-query-rate", "label": "Query Total", "operation": "max", "field": "metrics.elasticsearch.node.operations.completed", "filter": 'operation: "query" and metrics.elasticsearch.node.operations.completed:*'},
+                {"id": "otel-contrib-node-index-rate", "label": "Index Total", "operation": "max", "field": "metrics.elasticsearch.node.operations.completed", "filter": 'operation: "index" and metrics.elasticsearch.node.operations.completed:*'},
                 {"id": "otel-contrib-node-disk", "label": "Disk Avail", "operation": "max", "field": "metrics.elasticsearch.node.fs.disk.available", "filter": "metrics.elasticsearch.node.fs.disk.available:*", "width": 130},
             ],
         ),
@@ -581,8 +581,8 @@ def build_objects():
                 {"id": "otel-contrib-index-docs-table", "label": "Docs", "operation": "max", "field": "metrics.elasticsearch.index.documents", "filter": 'metrics.elasticsearch.index.documents:* and not elasticsearch.index.name: "_all"'},
                 {"id": "otel-contrib-index-size-table", "label": "Shard Size", "operation": "max", "field": "metrics.elasticsearch.index.shards.size", "filter": 'metrics.elasticsearch.index.shards.size:* and not elasticsearch.index.name: "_all"', "width": 130},
                 {"id": "otel-contrib-index-segments-table", "label": "Segments", "operation": "max", "field": "metrics.elasticsearch.index.segments.count", "filter": 'metrics.elasticsearch.index.segments.count:* and not elasticsearch.index.name: "_all"'},
-                {"id": "otel-contrib-index-read-rate-table", "label": "Read Total", "operation": "max", "field": "metrics.elasticsearch.index.operations.completed", "filter": 'attributes.operation: "fetch" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: "_all"'},
-                {"id": "otel-contrib-index-write-rate-table", "label": "Write Total", "operation": "max", "field": "metrics.elasticsearch.index.operations.completed", "filter": 'attributes.operation: "index" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: "_all"'},
+                {"id": "otel-contrib-index-read-rate-table", "label": "Read Total", "operation": "max", "field": "metrics.elasticsearch.index.operations.completed", "filter": 'operation: "fetch" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: "_all"'},
+                {"id": "otel-contrib-index-write-rate-table", "label": "Write Total", "operation": "max", "field": "metrics.elasticsearch.index.operations.completed", "filter": 'operation: "index" and metrics.elasticsearch.index.operations.completed:* and not elasticsearch.index.name: "_all"'},
             ],
             row_exclude=["_all"],
         ),
