@@ -65,10 +65,10 @@ This is the existing lab path based on the `autoops_es` module.
 
 Components:
 
-- [manifests/edot/main-metrics.yaml](/Users/ade/Documents/github/es-otel-monitoring/manifests/edot/main-metrics.yaml:1)
-- [manifests/edot/main-logs.yaml](/Users/ade/Documents/github/es-otel-monitoring/manifests/edot/main-logs.yaml:1)
-- [manifests/edot/gateway.yaml](/Users/ade/Documents/github/es-otel-monitoring/manifests/edot/gateway.yaml:1)
-- [manifests/edot/autoops-tsds-deriver.yaml](/Users/ade/Documents/github/es-otel-monitoring/manifests/edot/autoops-tsds-deriver.yaml:1)
+- [manifests/edot/main-metrics.yaml](manifests/edot/main-metrics.yaml)
+- [manifests/edot/main-logs.yaml](manifests/edot/main-logs.yaml)
+- [manifests/edot/gateway.yaml](manifests/edot/gateway.yaml)
+- [manifests/edot/autoops-tsds-deriver.yaml](manifests/edot/autoops-tsds-deriver.yaml)
 
 Data flow:
 
@@ -95,8 +95,8 @@ This is the preferred Elastic-supported path for Elasticsearch monitoring in thi
 
 Components:
 
-- [manifests/edot/main-metrics-agent.yaml](/Users/ade/Documents/github/es-otel-monitoring/manifests/edot/main-metrics-agent.yaml:1)
-- [manifests/edot/main-logs-agent.yaml](/Users/ade/Documents/github/es-otel-monitoring/manifests/edot/main-logs-agent.yaml:1)
+- [manifests/edot/main-metrics-agent.yaml](manifests/edot/main-metrics-agent.yaml)
+- [manifests/edot/main-logs-agent.yaml](manifests/edot/main-logs-agent.yaml)
 
 What it is:
 
@@ -149,7 +149,7 @@ Compatibility note:
   - generated Kibana saved objects
 - `docs/index.html`
   - GitHub Pages presentation
-- `docs/monitoring-modes.md`
+- `monitoring-modes.md`
   - deployment commands and flow comparison for `autoops`, `agent`, and `contrib`
 - `scripts`
   - deployment, verification, dashboard generation, and helper scripts
@@ -160,19 +160,19 @@ Compatibility note:
 
 - `stack-mon.ndjson`
   - legacy baseline export kept for reference
-- [dashboards/elasticsearch-otel-monitoring-main.ndjson](/Users/ade/Documents/github/es-otel-monitoring/dashboards/elasticsearch-otel-monitoring-main.ndjson:1)
+- [dashboards/elasticsearch-otel-monitoring-main.ndjson](dashboards/elasticsearch-otel-monitoring-main.ndjson)
   - autoops dashboard set
-- [dashboards/elasticsearch-otel-monitoring-main.export.json](/Users/ade/Documents/github/es-otel-monitoring/dashboards/elasticsearch-otel-monitoring-main.export.json:1)
+- [dashboards/elasticsearch-otel-monitoring-main.export.json](dashboards/elasticsearch-otel-monitoring-main.export.json)
   - structured wrapper for the autoops dashboard objects
-- [dashboards/elasticsearch-otel-monitoring-agent.ndjson](/Users/ade/Documents/github/es-otel-monitoring/dashboards/elasticsearch-otel-monitoring-agent.ndjson:1)
+- [dashboards/elasticsearch-otel-monitoring-agent.ndjson](dashboards/elasticsearch-otel-monitoring-agent.ndjson)
   - Elastic Agent dashboard set
-- [dashboards/elasticsearch-otel-monitoring-agent.export.json](/Users/ade/Documents/github/es-otel-monitoring/dashboards/elasticsearch-otel-monitoring-agent.export.json:1)
+- [dashboards/elasticsearch-otel-monitoring-agent.export.json](dashboards/elasticsearch-otel-monitoring-agent.export.json)
   - structured wrapper for the Elastic Agent dashboard objects
-- [scripts/build_otel_dashboard_ndjson.py](/Users/ade/Documents/github/es-otel-monitoring/scripts/build_otel_dashboard_ndjson.py:1)
+- [scripts/build_otel_dashboard_ndjson.py](scripts/build_otel_dashboard_ndjson.py)
   - regenerates the autoops dashboards
-- [scripts/build_otel_agent_dashboard_ndjson.py](/Users/ade/Documents/github/es-otel-monitoring/scripts/build_otel_agent_dashboard_ndjson.py:1)
+- [scripts/build_otel_agent_dashboard_ndjson.py](scripts/build_otel_agent_dashboard_ndjson.py)
   - regenerates the Elastic Agent dashboards
-- [scripts/import_monitoring_dashboard.sh](/Users/ade/Documents/github/es-otel-monitoring/scripts/import_monitoring_dashboard.sh:1)
+- [scripts/import_monitoring_dashboard.sh](scripts/import_monitoring_dashboard.sh)
   - imports the dashboard set for the selected mode
 
 The Elastic Agent dashboard data view intentionally excludes the legacy `metrics-elasticsearch.stack_monitoring.otel-main` stream so a reused lab does not mix old upstream-receiver data with the new Agent data.
@@ -203,7 +203,7 @@ Every page keeps the same top filter controls so cluster and node filters surviv
 
 Collector pods do not hardcode Elasticsearch credentials in their manifests. They read credentials from Kubernetes Secrets created during deployment.
 
-Secrets created by [scripts/deploy_edot.sh](/Users/ade/Documents/github/es-otel-monitoring/scripts/deploy_edot.sh:1):
+Secrets created by [scripts/deploy_edot.sh](scripts/deploy_edot.sh):
 
 - `lab-main/edot-root-ca`
 - `lab-monitoring/edot-root-ca`
@@ -321,7 +321,7 @@ Primary validation command:
 make test EDOT_MONITORING_MODE=agent
 ```
 
-What [scripts/test_auth.sh](/Users/ade/Documents/github/es-otel-monitoring/scripts/test_auth.sh:1) checks:
+What [scripts/test_auth.sh](scripts/test_auth.sh) checks:
 
 - TLS certificates are ready
 - both Kibana ingresses answer
@@ -401,7 +401,7 @@ Behavioral change:
 
 The repo presentation is published through GitHub Pages at:
 
-- [docs/index.html](/Users/ade/Documents/github/es-otel-monitoring/docs/index.html:1)
+- [docs/index.html](docs/index.html)
 
 It now needs to be read as:
 
