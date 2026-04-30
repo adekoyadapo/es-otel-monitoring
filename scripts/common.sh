@@ -68,7 +68,7 @@ validate_monitoring_mode() {
   case "${EDOT_MONITORING_MODE}" in
     autoops|agent|contrib) ;;
     *)
-      echo "Unsupported EDOT_MONITORING_MODE: ${EDOT_MONITORING_MODE}. Use autoops or agent." >&2
+      echo "Unsupported EDOT_MONITORING_MODE: ${EDOT_MONITORING_MODE}. Use autoops, agent, or contrib." >&2
       return 1
       ;;
   esac

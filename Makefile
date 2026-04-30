@@ -45,7 +45,7 @@ export SEARCH_LOAD_NUMBER_OF_REPLICAS
 export SEARCH_LOAD_QUERY_SIZE
 export SEARCH_LOAD_DEPLOYMENT_REPLICAS
 
-.PHONY: help up down reset status logs test import-dashboard search-load-up search-load-down search-load-reset
+.PHONY: help up down reset status logs test import-dashboard search-load-up search-load-down search-load-reset serverless-motlp-install serverless-motlp-scrape-es
 
 help:
 	@echo "Targets:"
@@ -59,6 +59,10 @@ help:
 	@echo "  make logs    Show useful workload logs for the lab"
 	@echo "  make down    Delete the local k3d lab"
 	@echo "  make reset   Recreate the lab from scratch and run verification"
+	@echo ""
+	@echo "Serverless Managed OTLP (requires ELASTIC_OTLP_ENDPOINT + ELASTIC_API_KEY):"
+	@echo "  make serverless-motlp-install   Helm install opentelemetry-kube-stack → mOTLP"
+	@echo "  make serverless-motlp-scrape-es Deploy contrib ES scrape collector (needs ELASTICSEARCH_URL + ELASTICSEARCH_API_KEY)"
 	@echo ""
 	@echo "Overrides:"
 	@echo "  ES_VERSION=<version>      Elastic Stack version to deploy"
@@ -138,3 +142,9 @@ search-load-down:
 
 search-load-reset:
 	@bash ./scripts/reset_search_load_data.sh
+
+serverless-motlp-install:
+	@bash ./scripts/install_otlp_kube_stack_managed_motlp.sh
+
+serverless-motlp-scrape-es:
+	@bash ./scripts/install_elasticsearch_scrape_collector.sh

@@ -57,6 +57,10 @@ High-level flow:
 4. Monitoring data is shipped to the monitoring Elasticsearch cluster.
 5. Dashboards in monitoring Kibana read from the stream for the selected mode.
 
+## Optional: Elastic Observability Serverless (Managed OTLP)
+
+To ship OpenTelemetry from Kubernetes to an **Elastic Observability Serverless** project via **Managed OTLP** and optionally scrape Elasticsearch with the upstream **`elasticsearchreceiver`**, use the helper scripts in this repo. That path does **not** require the local `lab-monitoring` Elasticsearch cluster. Details, environment variables, and which dashboard bundle to import are in [monitoring-modes.md](monitoring-modes.md#4-optional-elastic-serverless-managed-otlp-motel).
+
 ## Monitoring Modes
 
 ### `EDOT_MONITORING_MODE=autoops`
@@ -145,6 +149,8 @@ Compatibility note:
   - ECK operator and Elasticsearch/Kibana resources
 - `manifests/edot`
   - monitoring collectors, gateway, derivation job, and search workload manifests
+- `manifests/opentelemetry-elasticsearch-scrape.yaml`
+  - optional OpenTelemetry Operator `OpenTelemetryCollector` that scrapes **your** Elasticsearch with the contrib `elasticsearchreceiver` and forwards OTLP to the in-cluster kube-stack gateway (see [monitoring-modes.md](monitoring-modes.md#4-optional-elastic-serverless-managed-otlp-motel))
 - `dashboards`
   - generated Kibana saved objects
 - `docs/index.html`
@@ -153,6 +159,9 @@ Compatibility note:
   - deployment commands and flow comparison for `autoops`, `agent`, and `contrib`
 - `scripts`
   - deployment, verification, dashboard generation, and helper scripts
+  - `scripts/install_otlp_kube_stack_managed_motlp.sh` — Helm install `opentelemetry-kube-stack` with Managed OTLP export to Serverless
+  - `scripts/install_elasticsearch_scrape_collector.sh` — create scrape secret and apply `opentelemetry-elasticsearch-scrape.yaml`
+  - `scripts/import_dashboards_remote_kibana.sh` — import dashboard NDJSON into remote Kibana (Serverless or hosted)
 - `images`
   - dashboard screenshots used in the README and presentation
 
@@ -165,17 +174,23 @@ Compatibility note:
 - [dashboards/elasticsearch-otel-monitoring-main.export.json](dashboards/elasticsearch-otel-monitoring-main.export.json)
   - structured wrapper for the autoops dashboard objects
 - [dashboards/elasticsearch-otel-monitoring-agent.ndjson](dashboards/elasticsearch-otel-monitoring-agent.ndjson)
-  - Elastic Agent dashboard set
+  - Elastic Agent–branded dashboard set (same OTLP Lens definitions as Contrib, remapped saved object IDs; targets `metrics-elasticsearch.stack_monitoring.otel-main`)
 - [dashboards/elasticsearch-otel-monitoring-agent.export.json](dashboards/elasticsearch-otel-monitoring-agent.export.json)
   - structured wrapper for the Elastic Agent dashboard objects
+- [dashboards/elasticsearch-otel-monitoring-contrib.ndjson](dashboards/elasticsearch-otel-monitoring-contrib.ndjson)
+  - optional OpenTelemetry contrib `elasticsearchreceiver` dashboard set (for example Managed OTLP into `metrics-elasticsearch.stack_monitoring.otel-main`)
+- [dashboards/elasticsearch-otel-monitoring-contrib.export.json](dashboards/elasticsearch-otel-monitoring-contrib.export.json)
+  - structured wrapper for the contrib dashboard objects
 - [scripts/build_otel_dashboard_ndjson.py](scripts/build_otel_dashboard_ndjson.py)
   - regenerates the autoops dashboards
 - [scripts/build_otel_agent_dashboard_ndjson.py](scripts/build_otel_agent_dashboard_ndjson.py)
-  - regenerates the Elastic Agent dashboards
+  - regenerates the Elastic Agent–branded dashboards from the Contrib builder (MoTel / `otel-main` compatible)
+- [scripts/build_otel_contrib_dashboard_ndjson.py](scripts/build_otel_contrib_dashboard_ndjson.py)
+  - regenerates the optional contrib dashboards
 - [scripts/import_monitoring_dashboard.sh](scripts/import_monitoring_dashboard.sh)
   - imports the dashboard set for the selected mode
 
-The Elastic Agent dashboard data view intentionally excludes the legacy `metrics-elasticsearch.stack_monitoring.otel-main` stream so a reused lab does not mix old upstream-receiver data with the new Agent data.
+The **Elastic Agent** NDJSON is generated from the same Contrib OTLP definitions (`elasticsearchreceiver` → `metrics-elasticsearch.stack_monitoring.otel-main`) with different saved object IDs and titles so **Elasticsearch monitoring - Elastic Agent overview** works on Managed OTLP–only projects. The **Contrib** bundle is the same data with OTEL-branded names. For classic Integration metrics (`cluster_stats`, `node_stats`, …) without OTLP, use dashboards built for those schemas. Remote import: [scripts/import_dashboards_remote_kibana.sh](scripts/import_dashboards_remote_kibana.sh).
 
 ## Dashboard Views
 
@@ -372,12 +387,14 @@ kubectl -n lab-monitoring get pods
 
 ## Migration Note
 
-Migration from the old upstream `elasticsearchreceiver` path to Elastic Agent EDOT runtime:
+Migration from the old upstream `elasticsearchreceiver` **as the default in-lab** path to Elastic Agent EDOT runtime:
 
-- removed:
-  - `manifests/edot/main-metrics-contrib.yaml`
-  - `scripts/build_otel_contrib_dashboard_ndjson.py`
-  - contrib dashboard exports
+- removed from the default `make up` lab:
+  - `manifests/edot/main-metrics-contrib.yaml` (collector now Elastic Agent manifests)
+- **Optional (restored)** for Serverless Managed OTLP and other OTLP sinks that still use `elasticsearchreceiver`:
+  - [manifests/opentelemetry-elasticsearch-scrape.yaml](manifests/opentelemetry-elasticsearch-scrape.yaml)
+  - [scripts/build_otel_contrib_dashboard_ndjson.py](scripts/build_otel_contrib_dashboard_ndjson.py)
+  - contrib dashboard NDJSON / export under `dashboards/`
 - added:
   - standalone Elastic Agent metrics manifest
   - standalone Elastic Agent logs manifest
