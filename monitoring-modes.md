@@ -328,7 +328,7 @@ This is an **optional** path for shipping telemetry to **Elastic Observability S
 
 - Helm values default from Elastic Agent `v9.3.3`; override `VALUES_URL` / `CHART_VERSION` in [scripts/install_otlp_kube_stack_managed_motlp.sh](scripts/install_otlp_kube_stack_managed_motlp.sh) if you need a newer stack.
 - **Kibana / Lens on Serverless:** OTEL metrics TSDS stores filterable dimensions as explicit keywords under `attributes.*` (metric attributes such as `status`, `state`, `operation`, `name`, …) and `resource.attributes.elasticsearch.*` (cluster, node, index). Root ECS-style aliases may work in ES|QL but Lens controls and metric filters must use those full paths; the contrib builder does. After upgrading dashboards, re-run [scripts/import_dashboards_remote_kibana.sh](scripts/import_dashboards_remote_kibana.sh) with `overwrite=true` (or `REBUILD=1` then import).
-- Use **contrib** dashboards (`Elasticsearch OTEL monitoring - Contrib …`) for `elasticsearchreceiver` → `otel-main`. **Agent** dashboards target Elastic Agent stack-monitoring streams and exclude `otel-main` by design. **Autoops** dashboards need the autoops + deriver pipeline into the same project.
+- Use **contrib** dashboards (`Elasticsearch OTEL monitoring - Contrib …`) for `elasticsearchreceiver` → `otel-main`. **Agent** dashboards (`Elasticsearch monitoring - Elastic Agent …`) are **generated from the same OTLP Lens definitions** with different saved object IDs so the default navigation works on MoTel-only projects; they are not the classic Integration `cluster_stats` / `node_stats` UI. **Autoops** dashboards need the autoops + deriver pipeline into the same project.
 
 ## Configuration Summary
 

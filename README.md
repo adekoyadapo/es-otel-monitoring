@@ -174,7 +174,7 @@ Compatibility note:
 - [dashboards/elasticsearch-otel-monitoring-main.export.json](dashboards/elasticsearch-otel-monitoring-main.export.json)
   - structured wrapper for the autoops dashboard objects
 - [dashboards/elasticsearch-otel-monitoring-agent.ndjson](dashboards/elasticsearch-otel-monitoring-agent.ndjson)
-  - Elastic Agent dashboard set
+  - Elastic Agent–branded dashboard set (same OTLP Lens definitions as Contrib, remapped saved object IDs; targets `metrics-elasticsearch.stack_monitoring.otel-main`)
 - [dashboards/elasticsearch-otel-monitoring-agent.export.json](dashboards/elasticsearch-otel-monitoring-agent.export.json)
   - structured wrapper for the Elastic Agent dashboard objects
 - [dashboards/elasticsearch-otel-monitoring-contrib.ndjson](dashboards/elasticsearch-otel-monitoring-contrib.ndjson)
@@ -184,13 +184,13 @@ Compatibility note:
 - [scripts/build_otel_dashboard_ndjson.py](scripts/build_otel_dashboard_ndjson.py)
   - regenerates the autoops dashboards
 - [scripts/build_otel_agent_dashboard_ndjson.py](scripts/build_otel_agent_dashboard_ndjson.py)
-  - regenerates the Elastic Agent dashboards
+  - regenerates the Elastic Agent–branded dashboards from the Contrib builder (MoTel / `otel-main` compatible)
 - [scripts/build_otel_contrib_dashboard_ndjson.py](scripts/build_otel_contrib_dashboard_ndjson.py)
   - regenerates the optional contrib dashboards
 - [scripts/import_monitoring_dashboard.sh](scripts/import_monitoring_dashboard.sh)
   - imports the dashboard set for the selected mode
 
-The Elastic Agent dashboard data view intentionally excludes the legacy `metrics-elasticsearch.stack_monitoring.otel-main` stream so a reused lab does not mix old upstream-receiver data with the new Agent data. For **Managed OTLP** scraping with `elasticsearchreceiver` into that `otel-main` stream, import [dashboards/elasticsearch-otel-monitoring-contrib.ndjson](dashboards/elasticsearch-otel-monitoring-contrib.ndjson) using [scripts/import_dashboards_remote_kibana.sh](scripts/import_dashboards_remote_kibana.sh).
+The **Elastic Agent** NDJSON is generated from the same Contrib OTLP definitions (`elasticsearchreceiver` → `metrics-elasticsearch.stack_monitoring.otel-main`) with different saved object IDs and titles so **Elasticsearch monitoring - Elastic Agent overview** works on Managed OTLP–only projects. The **Contrib** bundle is the same data with OTEL-branded names. For classic Integration metrics (`cluster_stats`, `node_stats`, …) without OTLP, use dashboards built for those schemas. Remote import: [scripts/import_dashboards_remote_kibana.sh](scripts/import_dashboards_remote_kibana.sh).
 
 ## Dashboard Views
 
