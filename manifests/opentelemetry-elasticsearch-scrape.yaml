@@ -1,0 +1,80 @@
+# Scrape YOUR Elasticsearch workload (e.g. running in Podman on the host), send OTLP metrics
+# through the kube-stack gateway into Elastic Cloud Serverless (Managed OTLP). You are
+# NOT scraping Serverless Elasticsearch here — Serverless is only the telemetry backend.
+#
+# The scrape URL must be reachable from Kubernetes (k3d): often https://host.k3d.internal:9200
+# or the host LAN IP where Podman publishes ES. Credentials in secret elasticsearch-scrape-target
+# must be valid on THAT Elasticsearch instance (e.g. local API key with monitor).
+#
+# Resource tags follow data_stream.dataset=elasticsearch.stack_monitoring / namespace=main so
+# metrics map to metrics-elasticsearch.stack_monitoring.otel-* (use contrib dashboard NDJSON on Kibana).
+#
+# Prerequisite: Secret `elasticsearch-scrape-target` (see scripts/install_elasticsearch_scrape_collector.sh).
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: opentelemetry-elasticsearch-scrape
+  namespace: opentelemetry-operator-system
+spec:
+  mode: deployment
+  replicas: 1
+  # 0.117.x hits HTTP 400 against Elasticsearch 9.x for some node-stats paths; use a current contrib build.
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.148.0
+  env:
+    - name: ES_ENDPOINT
+      valueFrom:
+        secretKeyRef:
+          name: elasticsearch-scrape-target
+          key: endpoint
+    - name: ES_AUTHORIZATION
+      valueFrom:
+        secretKeyRef:
+          name: elasticsearch-scrape-target
+          key: authorization
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  config:
+    receivers:
+      elasticsearch:
+        endpoint: ${env:ES_ENDPOINT}
+        collection_interval: 60s
+        # ECK / Podman / lab ES often use a private CA. Use insecure_skip_verify (not `insecure`,
+        # which means "plaintext HTTP" in configtls and does not skip verify for https://).
+        tls:
+          insecure_skip_verify: true
+        # confighttp expects header values as strings, not single-element arrays (collector fails to start otherwise).
+        headers:
+          Authorization: ${env:ES_AUTHORIZATION}
+    processors:
+      resource/dataset:
+        attributes:
+          - action: upsert
+            key: data_stream.dataset
+            value: elasticsearch.stack_monitoring
+          - action: upsert
+            key: data_stream.namespace
+            value: main
+          - action: upsert
+            key: service.name
+            value: elasticsearch-podman
+          - action: upsert
+            key: service.namespace
+            value: local
+      batch:
+        timeout: 10s
+    exporters:
+      otlp/gateway:
+        endpoint: http://opentelemetry-kube-stack-gateway-collector:4317
+        tls:
+          insecure: true
+    service:
+      pipelines:
+        metrics:
+          receivers: [elasticsearch]
+          processors: [resource/dataset, batch]
+          exporters: [otlp/gateway]

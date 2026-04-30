@@ -279,6 +279,56 @@ contrib -> agent
 
 Use the same considerations as `agent`, because the runtime path is the same.
 
+## 4. Optional: Elastic Serverless Managed OTLP (MoTel)
+
+This is an **optional** path for shipping telemetry to **Elastic Observability Serverless** via **Managed OTLP** (mOTLP), while scraping a **user Elasticsearch** (ECK in the cluster, Podman on the host, etc.) with the upstream OpenTelemetry **`elasticsearchreceiver`**. It does **not** use the local `lab-monitoring` Elasticsearch cluster or `import_monitoring_dashboard.sh`.
+
+### What ships where
+
+- A contrib `OpenTelemetryCollector` ([manifests/opentelemetry-elasticsearch-scrape.yaml](manifests/opentelemetry-elasticsearch-scrape.yaml)) scrapes **your** Elasticsearch. Do **not** set the scrape URL to the Serverless `*.es.*` API; Serverless is only the OTLP sink.
+- Metrics use `data_stream.dataset=elasticsearch.stack_monitoring` and `data_stream.namespace=main` so they land in streams such as `metrics-elasticsearch.stack_monitoring.otel-*` in Serverless.
+- In-cluster **kube-stack gateway** forwards OTLP to `https://<project>.ingest.<region>.aws.elastic.cloud:443` using an Elasticsearch API key with ingest privileges for mOTLP.
+
+### Steps
+
+1. **Kubernetes** with `kubectl` and Helm (`helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts`). A minimal `k3d` cluster is enough; `make up` is only required if you also want the full ECK lab.
+
+2. **Install kube-stack + mOTLP** (namespace `opentelemetry-operator-system`, secret `elastic-secret-otel`):
+
+   ```bash
+   export ELASTIC_OTLP_ENDPOINT='https://<project>.ingest.<region>.aws.elastic.cloud:443'
+   export ELASTIC_API_KEY='<base64 API key with Managed OTLP ingest>'
+   # Optional: export ONBOARDING_ID='<uuid from Kibana OpenTelemetry onboarding>'
+   ./scripts/install_otlp_kube_stack_managed_motlp.sh
+   ```
+
+   Convenience: `make serverless-motlp-install` (same environment variables).
+
+3. **Scrape Elasticsearch** — `ELASTICSEARCH_URL` must be reachable **from pods** (for example `https://elasticsearch-main-es-http.lab-main.svc.cluster.local:9200` for in-cluster ECK). `ELASTICSEARCH_API_KEY` must be valid **on that cluster** (typically monitor privileges). The manifest uses **`tls.insecure_skip_verify: true`** for private CA / ECK HTTPS (plain `tls.insecure` is wrong for `https://` endpoints).
+
+   ```bash
+   export ELASTICSEARCH_URL='https://elasticsearch-main-es-http.lab-main.svc.cluster.local:9200'
+   export ELASTICSEARCH_API_KEY='<base64 API key for THAT Elasticsearch>'
+   ./scripts/install_elasticsearch_scrape_collector.sh
+   ```
+
+   Convenience: `make serverless-motlp-scrape-es`.
+
+4. **Dashboards in Serverless Kibana** — import all bundles (or at minimum the **contrib** set for this scrape path):
+
+   ```bash
+   export KIBANA_URL='https://<project>.kb.<region>.aws.elastic.cloud'
+   export KIBANA_API_KEY='<base64 API key with saved object import>'
+   ./scripts/import_dashboards_remote_kibana.sh
+   ```
+
+   Optional: `REBUILD=1` rebuilds autoops, agent, and contrib NDJSON before import.
+
+### Operational notes
+
+- Helm values default from Elastic Agent `v9.3.3`; override `VALUES_URL` / `CHART_VERSION` in [scripts/install_otlp_kube_stack_managed_motlp.sh](scripts/install_otlp_kube_stack_managed_motlp.sh) if you need a newer stack.
+- Use **contrib** dashboards (`Elasticsearch OTEL monitoring - Contrib …`) for `elasticsearchreceiver` → `otel-main`. **Agent** dashboards target Elastic Agent stack-monitoring streams and exclude `otel-main` by design. **Autoops** dashboards need the autoops + deriver pipeline into the same project.
+
 ## Configuration Summary
 
 | Area | `autoops` | `agent` |
