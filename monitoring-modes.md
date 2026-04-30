@@ -1,6 +1,6 @@
 # Monitoring Modes
 
-This repository currently supports three deployment commands through `EDOT_MONITORING_MODE`:
+This repository exposes three deployment commands through `EDOT_MONITORING_MODE`:
 
 ```bash
 make up EDOT_MONITORING_MODE=autoops
@@ -8,15 +8,15 @@ make up EDOT_MONITORING_MODE=agent
 make up EDOT_MONITORING_MODE=contrib
 ```
 
-`contrib` is kept only as a backward-compatible alias. It now resolves to the same Elastic Agent path as `agent`.
+`contrib` is still accepted, but it now resolves to the same runtime behavior as `agent`.
 
 ## At A Glance
 
-| Mode | Collector path | Metrics destination | Logs destination | Deriver | Recommended use |
+| Mode | Runtime shape | Metrics landing point | Logs landing point | Extra transform | Best fit |
 |---|---|---|---|---|---|
-| `autoops` | EDOT Collector with `autoops_es` | `metrics-elasticsearch.autoops-main` | `logs-elasticsearch.metrics-main` and `logs-elasticsearch.logs.otel-main` | Yes | When you need the raw `autoops_es` payload and curated TSDS dashboards |
-| `agent` | Elastic Agent with EDOT runtime and Elasticsearch integration | `metrics-elasticsearch.stack_monitoring.*-main` | `logs-elasticsearch.server-main` | No | Preferred supported path for Elasticsearch monitoring with Elastic Agent |
-| `contrib` | Compatibility alias to `agent` | Same as `agent` | Same as `agent` | No | For older scripts or automation that still call `contrib` |
+| `autoops` | EDOT Collector + gateway + deriver | `metrics-elasticsearch.autoops-main` | `logs-elasticsearch.metrics-main` and `logs-elasticsearch.logs.otel-main` | Yes | Preserve raw `autoops_es` and derive a curated TSDS |
+| `agent` | Elastic Agent with EDOT runtime | `metrics-elasticsearch.stack_monitoring.*-main` | `logs-elasticsearch.server-main` | No | Direct Elastic-supported stack-monitoring path |
+| `contrib` | Compatibility alias to `agent` | same as `agent` | same as `agent` | No | Older automation still using `contrib` |
 
 ## Deploy Commands
 
@@ -43,27 +43,110 @@ Primary manifests:
 - [manifests/edot/gateway.yaml](manifests/edot/gateway.yaml)
 - [manifests/edot/autoops-tsds-deriver.yaml](manifests/edot/autoops-tsds-deriver.yaml)
 
-Flow:
+### Runtime flow
 
 1. `metricbeatreceiver/elasticsearch` collects `autoops_es`.
-2. The raw monitoring payload is emitted as logs.
-3. Raw monitoring documents are written to `logs-elasticsearch.metrics-main`.
-4. OTEL infrastructure logs are written to `logs-elasticsearch.logs.otel-main`.
-5. The deriver reads the raw source stream.
-6. The deriver writes curated documents to `metrics-elasticsearch.autoops-main`.
-7. Kibana dashboards read the derived TSDS.
+2. The runtime emits that payload as logs, not native metrics.
+3. The source payload lands in `logs-elasticsearch.metrics-main`.
+4. The deriver reads the raw source stream.
+5. The deriver writes curated documents into `metrics-elasticsearch.autoops-main`.
+6. Dashboards read the derived TSDS.
 
-Benefits:
+### Key Kubernetes config
 
-- preserves the full raw `autoops_es` payload
-- gives a debuggable source stream
-- supports richer custom dashboards after derivation
+The mode is defined by the receiver type and by the fact that it intentionally runs a `logs` pipeline:
 
-Tradeoffs:
+```yaml
+receivers:
+  metricbeatreceiver/elasticsearch:
+    metricbeat:
+      modules:
+        - module: autoops_es
+          period: 10s
+          metricsets:
+            - cat_shards
+            - node_stats
+            - tasks_management
+    telemetry_types: ["logs"]
 
-- metrics land as logs first
-- requires a second derivation stage
-- more custom moving parts to operate
+service:
+  pipelines:
+    logs:
+      receivers: [metricbeatreceiver/elasticsearch]
+      exporters: [otlp_grpc/gateway]
+```
+
+That handoff is why the monitoring path also needs the gateway:
+
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+exporters:
+  elasticsearch/monitoring:
+    endpoints:
+      - ${env:MONITORING_ELASTICSEARCH_URL}
+    mapping:
+      mode: otel
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      exporters: [elasticsearch/monitoring]
+    metrics:
+      receivers: [otlp]
+      exporters: [elasticsearch/monitoring]
+```
+
+The last distinguishing component is the deriver:
+
+```yaml
+# autoops deriver conceptually:
+# source stream -> curated TSDS
+logs-elasticsearch.metrics-main
+  -> transform selected fields
+  -> metrics-elasticsearch.autoops-main
+```
+
+### Why use it
+
+- Preserves the raw `autoops_es` payload.
+- Keeps a source stream available for debugging and field discovery.
+- Lets the dashboard read a curated TSDS instead of the raw logs-shaped payload.
+
+### To ship to another OTEL endpoint
+
+This mode is already OTLP-shaped internally, so it is the easier one to redirect toward another OTEL collector or gateway.
+
+The main changes are:
+
+1. change the exporter in [manifests/edot/main-metrics.yaml](manifests/edot/main-metrics.yaml)
+2. optionally replace or remove the monitoring-side [manifests/edot/gateway.yaml](manifests/edot/gateway.yaml)
+3. decide whether the deriver still runs against Elasticsearch or whether derivation moves downstream
+
+Typical change:
+
+```yaml
+exporters:
+  otlp_grpc/external:
+    endpoint: other-otel-gateway.example:4317
+    tls:
+      insecure: false
+
+service:
+  pipelines:
+    logs:
+      exporters: [otlp_grpc/external]
+```
+
+Notable impact:
+
+- if Elasticsearch is no longer the first landing point, the current deriver path will need to be redesigned
+- the current dashboards will not work until a replacement metrics store or Elasticsearch landing path exists
 
 ## 2. `agent`
 
@@ -72,40 +155,101 @@ Primary manifests:
 - [manifests/edot/main-metrics-agent.yaml](manifests/edot/main-metrics-agent.yaml)
 - [manifests/edot/main-logs-agent.yaml](manifests/edot/main-logs-agent.yaml)
 
-Flow:
+### Runtime flow
 
 1. Standalone Elastic Agent starts with local `agent.yml`.
 2. The Agent runs the Elasticsearch integration metrics input.
 3. The Agent runs the filestream logs input for Elasticsearch server logs.
-4. Metrics are written directly to stack-monitoring metrics data streams.
-5. Logs are written to `logs-elasticsearch.server-main`.
-6. Kibana dashboards read the stack-monitoring metrics streams directly.
+4. Metrics are written directly into stack-monitoring metrics data streams.
+5. Logs are written into `logs-elasticsearch.server-main`.
+6. Dashboards read the stack-monitoring metrics streams directly.
 
-Current metrics streams:
+### Key Kubernetes config
 
-- `metrics-elasticsearch.stack_monitoring.cluster_stats-main`
-- `metrics-elasticsearch.stack_monitoring.index-main`
-- `metrics-elasticsearch.stack_monitoring.index_recovery-main`
-- `metrics-elasticsearch.stack_monitoring.index_summary-main`
-- `metrics-elasticsearch.stack_monitoring.node-main`
-- `metrics-elasticsearch.stack_monitoring.node_stats-main`
-- `metrics-elasticsearch.stack_monitoring.shard-main`
+The most important distinction is that this mode is integration-driven, not raw collector-pipeline driven.
 
-Current log stream:
+Metrics config:
 
-- `logs-elasticsearch.server-main`
+```yaml
+outputs:
+  default:
+    type: elasticsearch
+    hosts:
+      - ${MONITORING_ELASTICSEARCH_URL}
 
-Benefits:
+inputs:
+  - id: elasticsearch-stack-monitoring
+    type: elasticsearch/metrics
+    use_output: default
+    data_stream.namespace: main
+    streams:
+      - metricsets: ["cluster_stats"]
+        data_stream.dataset: elasticsearch.stack_monitoring.cluster_stats
+      - metricsets: ["index"]
+        data_stream.dataset: elasticsearch.stack_monitoring.index
+      - metricsets: ["node_stats"]
+        data_stream.dataset: elasticsearch.stack_monitoring.node_stats
+      - metricsets: ["shard"]
+        data_stream.dataset: elasticsearch.stack_monitoring.shard
+```
 
-- closest to the supported Elastic operating model
-- no custom deriver required
-- direct stack-monitoring data streams
-- simpler runtime and easier lifecycle management
+Logs config:
 
-Tradeoffs:
+```yaml
+outputs:
+  default:
+    type: elasticsearch
+    hosts:
+      - ${MONITORING_ELASTICSEARCH_URL}
 
-- does not preserve the raw `autoops_es` payload
-- uses integration-shaped ECS/Beat fields instead of the custom derived schema
+inputs:
+  - id: elasticsearch-server-logs
+    type: filestream
+    use_output: default
+    data_stream.namespace: main
+    streams:
+      - id: elasticsearch-server-stream
+        data_stream.dataset: elasticsearch.server
+        paths:
+          - /var/log/containers/*_lab-main_elasticsearch-*.log
+        parsers:
+          - container: ~
+```
+
+This path writes directly to Elasticsearch. There is no monitoring-side OTLP gateway and no deriver stage in the steady-state path.
+
+### Why use it
+
+- Closest to the supported Elastic operating model.
+- Direct stack-monitoring metrics streams.
+- Fewer moving parts than `autoops`.
+- Simpler dashboard data source design.
+
+### To ship to another OTEL endpoint
+
+This mode is less natural to redirect to a generic OTEL endpoint because it is currently defined around Elastic Agent integration outputs that write straight to Elasticsearch.
+
+To push elsewhere, the main changes are:
+
+1. replace the `outputs.default` block in the Agent config
+2. choose whether Elastic Agent should still own collection or whether collection should move back to a collector/gateway path
+3. redesign dashboards if Elasticsearch is no longer the first landing point
+
+The desired shape would be conceptually:
+
+```yaml
+outputs:
+  default:
+    type: otlp
+    hosts:
+      - other-otel-gateway.example:4317
+```
+
+Notable impact:
+
+- this is a bigger design change than in `autoops`
+- the current stack-monitoring data stream names will disappear unless another downstream system reproduces them
+- the Kibana dashboards in this repo assume Elasticsearch remains the destination system
 
 ## 3. `contrib`
 
@@ -115,109 +259,49 @@ Deploy:
 make up EDOT_MONITORING_MODE=contrib
 ```
 
-Current behavior:
+### Current behavior
 
-- this no longer deploys the old upstream `elasticsearchreceiver` path
-- it resolves to the same runtime behavior as `EDOT_MONITORING_MODE=agent`
-- it exists only so older automation and shell history do not break
+- This no longer deploys the old upstream `elasticsearchreceiver` path.
+- It resolves to the same runtime behavior as `EDOT_MONITORING_MODE=agent`.
+- It exists only so older automation and shell history do not break.
 
-Benefits:
+### Practical distinction
 
-- safe compatibility switch for older commands
-- lets existing callers migrate incrementally
+There is no manifest distinction anymore.
 
-Tradeoffs:
+`contrib` now means:
 
-- not a distinct implementation anymore
-- should be treated as transitional, not primary
+```text
+contrib -> agent
+```
 
-## Kubernetes Manifest Distinctions
+### To ship to another OTEL endpoint
 
-### `autoops` manifest characteristics
+Use the same considerations as `agent`, because the runtime path is the same.
 
-The `autoops` path is collector-centric and split across metrics, logs, gateway, and derivation manifests.
-
-Key configuration distinctions:
-
-- [manifests/edot/main-metrics.yaml](manifests/edot/main-metrics.yaml)
-  - uses `metricbeatreceiver/elasticsearch`
-  - collects `autoops_es`
-  - does not write directly to final dashboard metrics streams
-- [manifests/edot/gateway.yaml](manifests/edot/gateway.yaml)
-  - central export point to the monitoring cluster
-  - keeps the OTEL/collector routing layer
-- [manifests/edot/autoops-tsds-deriver.yaml](manifests/edot/autoops-tsds-deriver.yaml)
-  - adds a second processing stage
-  - reads `logs-elasticsearch.metrics-main`
-  - writes `metrics-elasticsearch.autoops-main`
-
-Operationally, `autoops` is a source-preserving design with explicit transformation after ingest.
-
-### `agent` manifest characteristics
-
-The `agent` path is integration-centric and uses standalone Elastic Agent manifests.
-
-Key configuration distinctions:
-
-- [manifests/edot/main-metrics-agent.yaml](manifests/edot/main-metrics-agent.yaml)
-  - container image: Elastic Agent
-  - config source: embedded `agent.yml` in a ConfigMap
-  - input type: `elasticsearch/metrics`
-  - output: monitoring Elasticsearch directly
-  - readiness/liveness: Agent HTTP monitoring endpoint
-- [manifests/edot/main-logs-agent.yaml](manifests/edot/main-logs-agent.yaml)
-  - input type: `filestream`
-  - tails Elasticsearch server logs from Kubernetes nodes
-  - outputs directly to monitoring Elasticsearch
-- no deriver manifest is used
-- no monitoring-side gateway deployment is required for the final stack-monitoring path
-
-Operationally, `agent` is a direct-write design with fewer runtime layers.
-
-### Configuration summary
+## Configuration Summary
 
 | Area | `autoops` | `agent` |
 |---|---|---|
 | Runtime shape | EDOT Collector + gateway + deriver | Elastic Agent + EDOT runtime |
+| Primary config object | collector `config.yaml` | Agent `agent.yml` |
 | Metrics source | `autoops_es` | Elasticsearch integration |
-| Metrics first land in | `logs-*` | `metrics-*` |
-| Extra transformation | required | not required |
-| Logs path | OTEL collector logs flow | filestream integration flow |
-| Dashboard source | derived TSDS | direct stack-monitoring metrics streams |
+| First landing format | logs-shaped source docs | stack-monitoring metrics streams |
+| Gateway required | yes | no |
+| Deriver required | yes | no |
+| External OTEL forwarding effort | lower | higher |
 
-## Verification Commands
+## Notable Changes When Switching Destination
 
-```bash
-make test EDOT_MONITORING_MODE=autoops
-make test EDOT_MONITORING_MODE=agent
-make test EDOT_MONITORING_MODE=contrib
-```
+If the target is no longer the monitoring Elasticsearch cluster:
 
-Synthetic workload control:
-
-```bash
-make search-load-up
-make search-load-down
-```
-
-## Credentials And Permissions
-
-The deployment uses Kubernetes Secrets. Credentials are not hardcoded into the manifests.
-
-Important permissions:
-
-- source-cluster collector user:
-  - `remote_monitoring_collector`
-- monitoring-cluster ingest user:
-  - write privileges for the destination monitoring data streams
-
-## Migration Guidance
-
-If you are moving from older usage:
-
-- old `contrib` command:
-  - now maps to `agent`
-- old `autoops` usage:
-  - still works and remains useful when the raw `autoops_es` source stream is required
-- preferred new command:
-  - `make up EDOT_MONITORING_MODE=agent`
+- `autoops`
+  - easiest place to change is the collector exporter
+  - gateway can be replaced with another OTLP destination
+  - deriver must be reconsidered if Elasticsearch is no longer first landing point
+- `agent`
+  - output block must be redesigned
+  - current stack-monitoring stream contract will not hold automatically
+  - dashboards will need a replacement storage/query path
+- `contrib`
+  - same changes as `agent`
