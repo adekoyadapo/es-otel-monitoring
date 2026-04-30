@@ -1,0 +1,4342 @@
+{
+  "description": "Structured export wrapper for the Elastic Agent EDOT Elasticsearch monitoring dashboards. Convert to NDJSON for Kibana UI import.",
+  "objects": [
+    {
+      "type": "index-pattern",
+      "id": "otel-elasticsearch-agent-metrics-main",
+      "attributes": {
+        "title": "metrics-elasticsearch.stack_monitoring.*-main,-metrics-elasticsearch.stack_monitoring.otel-main",
+        "name": "otel-elasticsearch-agent-metrics-main",
+        "timeFieldName": "@timestamp",
+        "fields": "[]",
+        "fieldAttrs": "{}",
+        "fieldFormatMap": "{\"elasticsearch.node.stats.jvm.mem.heap.used.bytes\": {\"id\": \"bytes\"}, \"elasticsearch.node.stats.jvm.mem.heap.max.bytes\": {\"id\": \"bytes\"}, \"elasticsearch.node.stats.indices.store.size.bytes\": {\"id\": \"bytes\"}, \"elasticsearch.node.stats.indices.store.total_data_set_size.bytes\": {\"id\": \"bytes\"}, \"elasticsearch.cluster.stats.indices.store.size.bytes\": {\"id\": \"bytes\"}, \"elasticsearch.cluster.stats.indices.store.total_data_set_size.bytes\": {\"id\": \"bytes\"}, \"elasticsearch.index.total.store.size_in_bytes\": {\"id\": \"bytes\"}, \"elasticsearch.index.total.store.total_data_set_size_in_bytes\": {\"id\": \"bytes\"}, \"elasticsearch.index.primaries.store.size_in_bytes\": {\"id\": \"bytes\"}, \"elasticsearch.index.primaries.store.total_data_set_size_in_bytes\": {\"id\": \"bytes\"}}",
+        "runtimeFieldMap": "{}",
+        "sourceFilters": "[]",
+        "allowHidden": false
+      }
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-health-status",
+      "attributes": {
+        "description": "",
+        "title": "Cluster Health",
+        "visualizationType": "lnsDatatable",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-health-status-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-health-status-row-0",
+                    "otel-agent-lens-health-status-row-1",
+                    "otel-agent-lens-health-status-count"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-health-status-row-0": {
+                      "customLabel": true,
+                      "dataType": "string",
+                      "isBucketed": true,
+                      "label": "Cluster",
+                      "operationType": "terms",
+                      "params": {
+                        "exclude": [],
+                        "excludeIsRegex": false,
+                        "include": [],
+                        "includeIsRegex": false,
+                        "missingBucket": false,
+                        "orderBy": {
+                          "columnId": "otel-agent-lens-health-status-count",
+                          "type": "column"
+                        },
+                        "orderDirection": "desc",
+                        "otherBucket": false,
+                        "parentFormat": {
+                          "id": "terms"
+                        },
+                        "size": 20
+                      },
+                      "scale": "ordinal",
+                      "sourceField": "elasticsearch.cluster.name"
+                    },
+                    "otel-agent-lens-health-status-row-1": {
+                      "customLabel": true,
+                      "dataType": "string",
+                      "isBucketed": true,
+                      "label": "Status",
+                      "operationType": "terms",
+                      "params": {
+                        "exclude": [],
+                        "excludeIsRegex": false,
+                        "include": [],
+                        "includeIsRegex": false,
+                        "missingBucket": false,
+                        "orderBy": {
+                          "columnId": "otel-agent-lens-health-status-count",
+                          "type": "column"
+                        },
+                        "orderDirection": "desc",
+                        "otherBucket": false,
+                        "parentFormat": {
+                          "id": "terms"
+                        },
+                        "size": 20
+                      },
+                      "scale": "ordinal",
+                      "sourceField": "elasticsearch.cluster.stats.status"
+                    },
+                    "otel-agent-lens-health-status-count": {
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Count of records",
+                      "operationType": "count",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "___records___"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.status:*"
+          },
+          "visualization": {
+            "columns": [
+              {
+                "alignment": "left",
+                "columnId": "otel-agent-lens-health-status-row-0",
+                "isTransposed": false,
+                "oneClickFilter": true,
+                "width": 220
+              },
+              {
+                "alignment": "left",
+                "columnId": "otel-agent-lens-health-status-row-1",
+                "isTransposed": false,
+                "oneClickFilter": true,
+                "width": 140
+              },
+              {
+                "columnId": "otel-agent-lens-health-status-count",
+                "hidden": true,
+                "isMetric": true,
+                "isTransposed": false
+              }
+            ],
+            "layerId": "otel-agent-lens-health-status-layer",
+            "layerType": "data"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-health-status-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-nodes",
+      "attributes": {
+        "description": "",
+        "title": "Nodes",
+        "visualizationType": "lnsLegacyMetric",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-nodes-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-nodes-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-nodes-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.nodes.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Nodes",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.nodes.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "accessor": "otel-agent-lens-nodes-metric",
+            "colorMode": "Labels",
+            "layerId": "otel-agent-lens-nodes-layer",
+            "layerType": "data",
+            "size": "xl",
+            "textAlign": "center",
+            "titlePosition": "top"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-nodes-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-data-nodes",
+      "attributes": {
+        "description": "",
+        "title": "Data Nodes",
+        "visualizationType": "lnsLegacyMetric",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-data-nodes-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-data-nodes-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-data-nodes-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.nodes.data:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Data Nodes",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.nodes.data"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "accessor": "otel-agent-lens-data-nodes-metric",
+            "colorMode": "Labels",
+            "layerId": "otel-agent-lens-data-nodes-layer",
+            "layerType": "data",
+            "size": "xl",
+            "textAlign": "center",
+            "titlePosition": "top"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-data-nodes-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-indices-count",
+      "attributes": {
+        "description": "",
+        "title": "Indices",
+        "visualizationType": "lnsLegacyMetric",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-indices-count-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-indices-count-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-indices-count-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.indices.total:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Indices",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.indices.total"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "accessor": "otel-agent-lens-indices-count-metric",
+            "colorMode": "Labels",
+            "layerId": "otel-agent-lens-indices-count-layer",
+            "layerType": "data",
+            "size": "xl",
+            "textAlign": "center",
+            "titlePosition": "top"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-indices-count-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-shards-count",
+      "attributes": {
+        "description": "",
+        "title": "Shards",
+        "visualizationType": "lnsLegacyMetric",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-shards-count-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-shards-count-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-shards-count-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.indices.shards.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Shards",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.indices.shards.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "accessor": "otel-agent-lens-shards-count-metric",
+            "colorMode": "Labels",
+            "layerId": "otel-agent-lens-shards-count-layer",
+            "layerType": "data",
+            "size": "xl",
+            "textAlign": "center",
+            "titlePosition": "top"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-shards-count-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-docs-total",
+      "attributes": {
+        "description": "",
+        "title": "Docs",
+        "visualizationType": "lnsLegacyMetric",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-docs-total-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-docs-total-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-docs-total-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.indices.docs.total:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Docs",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.indices.docs.total"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "accessor": "otel-agent-lens-docs-total-metric",
+            "colorMode": "Labels",
+            "layerId": "otel-agent-lens-docs-total-layer",
+            "layerType": "data",
+            "size": "xl",
+            "textAlign": "center",
+            "titlePosition": "top"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-docs-total-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-primary-shards",
+      "attributes": {
+        "description": "",
+        "title": "Primary Shards",
+        "visualizationType": "lnsLegacyMetric",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-primary-shards-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-primary-shards-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-primary-shards-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.indices.shards.primaries:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Primary Shards",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.indices.shards.primaries"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "accessor": "otel-agent-lens-primary-shards-metric",
+            "colorMode": "Labels",
+            "layerId": "otel-agent-lens-primary-shards-layer",
+            "layerType": "data",
+            "size": "xl",
+            "textAlign": "center",
+            "titlePosition": "top"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-primary-shards-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-cluster-store-size",
+      "attributes": {
+        "description": "",
+        "title": "Store Size",
+        "visualizationType": "lnsLegacyMetric",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-cluster-store-size-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-cluster-store-size-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-cluster-store-size-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.indices.store.size.bytes:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Store Size",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.indices.store.size.bytes"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "accessor": "otel-agent-lens-cluster-store-size-metric",
+            "colorMode": "Labels",
+            "layerId": "otel-agent-lens-cluster-store-size-layer",
+            "layerType": "data",
+            "size": "xl",
+            "textAlign": "center",
+            "titlePosition": "top"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-cluster-store-size-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-query-total",
+      "attributes": {
+        "description": "",
+        "title": "Query Total",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-query-total-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-query-total-date",
+                    "otel-agent-lens-query-total-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-query-total-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-query-total-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.indices.search.query_total.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Query Total",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.indices.search.query_total.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-query-total-metric"
+                ],
+                "layerId": "otel-agent-lens-query-total-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-query-total-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#348888",
+                    "forAccessor": "otel-agent-lens-query-total-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-query-total-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-index-total",
+      "attributes": {
+        "description": "",
+        "title": "Index Total",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-index-total-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-index-total-date",
+                    "otel-agent-lens-index-total-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-index-total-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-index-total-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.indices.indexing.index_total.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Index Total",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.indices.indexing.index_total.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-index-total-metric"
+                ],
+                "layerId": "otel-agent-lens-index-total-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-index-total-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#d17c2d",
+                    "forAccessor": "otel-agent-lens-index-total-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-index-total-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-heap-pct",
+      "attributes": {
+        "description": "",
+        "title": "Heap Used %",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-heap-pct-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-heap-pct-date",
+                    "otel-agent-lens-heap-pct-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-heap-pct-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-heap-pct-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.jvm.mem.heap.used.pct:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Heap Used %",
+                      "operationType": "average",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.jvm.mem.heap.used.pct"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-heap-pct-metric"
+                ],
+                "layerId": "otel-agent-lens-heap-pct-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-heap-pct-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#2f9c95",
+                    "forAccessor": "otel-agent-lens-heap-pct-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-heap-pct-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-store-size",
+      "attributes": {
+        "description": "",
+        "title": "Node Store Size",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-store-size-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-store-size-date",
+                    "otel-agent-lens-store-size-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-store-size-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-store-size-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.indices.store.size.bytes:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Node Store Size",
+                      "operationType": "sum",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.indices.store.size.bytes"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-store-size-metric"
+                ],
+                "layerId": "otel-agent-lens-store-size-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-store-size-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#7aa95c",
+                    "forAccessor": "otel-agent-lens-store-size-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-store-size-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-open-files",
+      "attributes": {
+        "description": "",
+        "title": "Open Files",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-open-files-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-open-files-date",
+                    "otel-agent-lens-open-files-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-open-files-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-open-files-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.process.open_file_descriptors:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Open Files",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.process.open_file_descriptors"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-open-files-metric"
+                ],
+                "layerId": "otel-agent-lens-open-files-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-open-files-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#6a8caf",
+                    "forAccessor": "otel-agent-lens-open-files-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-open-files-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-cpu-pct",
+      "attributes": {
+        "description": "",
+        "title": "CPU %",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-cpu-pct-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-cpu-pct-date",
+                    "otel-agent-lens-cpu-pct-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-cpu-pct-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-cpu-pct-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.process.cpu.pct:*"
+                      },
+                      "isBucketed": false,
+                      "label": "CPU %",
+                      "operationType": "average",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.process.cpu.pct"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-cpu-pct-metric"
+                ],
+                "layerId": "otel-agent-lens-cpu-pct-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-cpu-pct-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#7b6fd0",
+                    "forAccessor": "otel-agent-lens-cpu-pct-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-cpu-pct-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-search-queue",
+      "attributes": {
+        "description": "",
+        "title": "Search Queue",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-search-queue-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-search-queue-date",
+                    "otel-agent-lens-search-queue-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-search-queue-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-search-queue-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.thread_pool.search.queue.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Search Queue",
+                      "operationType": "average",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.thread_pool.search.queue.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-search-queue-metric"
+                ],
+                "layerId": "otel-agent-lens-search-queue-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-search-queue-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#7b6fd0",
+                    "forAccessor": "otel-agent-lens-search-queue-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-search-queue-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-write-queue",
+      "attributes": {
+        "description": "",
+        "title": "Write Queue",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-write-queue-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-write-queue-date",
+                    "otel-agent-lens-write-queue-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-write-queue-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-write-queue-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.thread_pool.write.queue.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Write Queue",
+                      "operationType": "average",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.thread_pool.write.queue.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-write-queue-metric"
+                ],
+                "layerId": "otel-agent-lens-write-queue-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-write-queue-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#d17c2d",
+                    "forAccessor": "otel-agent-lens-write-queue-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-write-queue-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-search-rejected",
+      "attributes": {
+        "description": "",
+        "title": "Search Rejected",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-search-rejected-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-search-rejected-date",
+                    "otel-agent-lens-search-rejected-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-search-rejected-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-search-rejected-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.thread_pool.search.rejected.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Search Rejected",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.thread_pool.search.rejected.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-search-rejected-metric"
+                ],
+                "layerId": "otel-agent-lens-search-rejected-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-search-rejected-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#c2574c",
+                    "forAccessor": "otel-agent-lens-search-rejected-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-search-rejected-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-write-rejected",
+      "attributes": {
+        "description": "",
+        "title": "Write Rejected",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-write-rejected-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-write-rejected-date",
+                    "otel-agent-lens-write-rejected-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-write-rejected-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-write-rejected-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.thread_pool.write.rejected.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Write Rejected",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.thread_pool.write.rejected.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-write-rejected-metric"
+                ],
+                "layerId": "otel-agent-lens-write-rejected-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-write-rejected-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#8c3a3a",
+                    "forAccessor": "otel-agent-lens-write-rejected-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-write-rejected-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-young-gc",
+      "attributes": {
+        "description": "",
+        "title": "Young GC Total",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-young-gc-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-young-gc-date",
+                    "otel-agent-lens-young-gc-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-young-gc-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-young-gc-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.jvm.gc.collectors.young.collection.ms:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Young GC Total",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.jvm.gc.collectors.young.collection.ms"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-young-gc-metric"
+                ],
+                "layerId": "otel-agent-lens-young-gc-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-young-gc-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#b0922e",
+                    "forAccessor": "otel-agent-lens-young-gc-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-young-gc-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-old-gc",
+      "attributes": {
+        "description": "",
+        "title": "Old GC Total",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-old-gc-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-old-gc-date",
+                    "otel-agent-lens-old-gc-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-old-gc-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-old-gc-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.jvm.gc.collectors.old.collection.ms:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Old GC Total",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.jvm.gc.collectors.old.collection.ms"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-old-gc-metric"
+                ],
+                "layerId": "otel-agent-lens-old-gc-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-old-gc-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#7b4f9e",
+                    "forAccessor": "otel-agent-lens-old-gc-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-old-gc-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-index-docs",
+      "attributes": {
+        "description": "",
+        "title": "Index Docs",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-index-docs-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-index-docs-date",
+                    "otel-agent-lens-index-docs-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-index-docs-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-index-docs-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.docs.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Index Docs",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.docs.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-index-docs-metric"
+                ],
+                "layerId": "otel-agent-lens-index-docs-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-index-docs-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#4f86c6",
+                    "forAccessor": "otel-agent-lens-index-docs-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-index-docs-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-index-size",
+      "attributes": {
+        "description": "",
+        "title": "Index Size",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-index-size-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-index-size-date",
+                    "otel-agent-lens-index-size-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-index-size-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-index-size-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.store.size_in_bytes:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Index Size",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.store.size_in_bytes"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-index-size-metric"
+                ],
+                "layerId": "otel-agent-lens-index-size-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-index-size-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#7aa95c",
+                    "forAccessor": "otel-agent-lens-index-size-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-index-size-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-index-segments",
+      "attributes": {
+        "description": "",
+        "title": "Segments",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-index-segments-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-index-segments-date",
+                    "otel-agent-lens-index-segments-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-index-segments-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-index-segments-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.segments.count:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Segments",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.segments.count"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-index-segments-metric"
+                ],
+                "layerId": "otel-agent-lens-index-segments-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-index-segments-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#7b6fd0",
+                    "forAccessor": "otel-agent-lens-index-segments-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-index-segments-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-index-query-total",
+      "attributes": {
+        "description": "",
+        "title": "Index Query Total",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-index-query-total-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-index-query-total-date",
+                    "otel-agent-lens-index-query-total-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-index-query-total-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-index-query-total-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.search.query_total:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Index Query Total",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.search.query_total"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-index-query-total-metric"
+                ],
+                "layerId": "otel-agent-lens-index-query-total-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-index-query-total-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#348888",
+                    "forAccessor": "otel-agent-lens-index-query-total-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-index-query-total-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-index-write-total",
+      "attributes": {
+        "description": "",
+        "title": "Index Write Total",
+        "visualizationType": "lnsXY",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-index-write-total-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-index-write-total-date",
+                    "otel-agent-lens-index-write-total-metric"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-index-write-total-date": {
+                      "dataType": "date",
+                      "isBucketed": true,
+                      "label": "@timestamp",
+                      "operationType": "date_histogram",
+                      "params": {
+                        "dropPartials": true,
+                        "includeEmptyRows": true,
+                        "interval": "auto"
+                      },
+                      "scale": "interval",
+                      "sourceField": "@timestamp"
+                    },
+                    "otel-agent-lens-index-write-total-metric": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.indexing.index_total:*"
+                      },
+                      "isBucketed": false,
+                      "label": "Index Write Total",
+                      "operationType": "max",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.indexing.index_total"
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "axisTitlesVisibilitySettings": {
+              "x": false,
+              "yLeft": false,
+              "yRight": true
+            },
+            "fittingFunction": "None",
+            "gridlinesVisibilitySettings": {
+              "x": false,
+              "yLeft": true,
+              "yRight": true
+            },
+            "labelsOrientation": {
+              "x": 0,
+              "yLeft": 0,
+              "yRight": 0
+            },
+            "layers": [
+              {
+                "accessors": [
+                  "otel-agent-lens-index-write-total-metric"
+                ],
+                "layerId": "otel-agent-lens-index-write-total-layer",
+                "layerType": "data",
+                "position": "top",
+                "seriesType": "line",
+                "showGridlines": false,
+                "xAccessor": "otel-agent-lens-index-write-total-date",
+                "yConfig": [
+                  {
+                    "axisMode": "left",
+                    "color": "#d17c2d",
+                    "forAccessor": "otel-agent-lens-index-write-total-metric"
+                  }
+                ]
+              }
+            ],
+            "legend": {
+              "isVisible": true,
+              "legendSize": "auto",
+              "position": "right"
+            },
+            "preferredSeriesType": "line",
+            "tickLabelsVisibilitySettings": {
+              "x": true,
+              "yLeft": true,
+              "yRight": true
+            },
+            "valueLabels": "hide",
+            "yLeftExtent": {
+              "mode": "dataBounds"
+            },
+            "yRightExtent": {
+              "mode": "full"
+            }
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-index-write-total-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-cluster-info",
+      "attributes": {
+        "description": "",
+        "title": "Cluster Info",
+        "visualizationType": "lnsDatatable",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-cluster-info-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-cluster-info-row",
+                    "otel-agent-lens-cluster-info-count",
+                    "otel-agent-cluster-nodes",
+                    "otel-agent-cluster-data",
+                    "otel-agent-cluster-shards",
+                    "otel-agent-cluster-docs"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-cluster-info-row": {
+                      "customLabel": true,
+                      "dataType": "string",
+                      "isBucketed": true,
+                      "label": "Cluster",
+                      "operationType": "terms",
+                      "params": {
+                        "exclude": [],
+                        "excludeIsRegex": false,
+                        "include": [],
+                        "includeIsRegex": false,
+                        "missingBucket": false,
+                        "orderBy": {
+                          "columnId": "otel-agent-lens-cluster-info-count",
+                          "type": "column"
+                        },
+                        "orderDirection": "desc",
+                        "otherBucket": true,
+                        "parentFormat": {
+                          "id": "terms"
+                        },
+                        "size": 10
+                      },
+                      "scale": "ordinal",
+                      "sourceField": "elasticsearch.cluster.name"
+                    },
+                    "otel-agent-lens-cluster-info-count": {
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Count of records",
+                      "operationType": "count",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "___records___"
+                    },
+                    "otel-agent-cluster-nodes": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Nodes",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.nodes.count",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.nodes.count:*"
+                      }
+                    },
+                    "otel-agent-cluster-data": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Data Nodes",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.nodes.data",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.nodes.data:*"
+                      }
+                    },
+                    "otel-agent-cluster-shards": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Shards",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.indices.shards.count",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.indices.shards.count:*"
+                      }
+                    },
+                    "otel-agent-cluster-docs": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Docs",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.cluster.stats.indices.docs.total",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.cluster_stats\" and elasticsearch.cluster.stats.indices.docs.total:*"
+                      }
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "columns": [
+              {
+                "alignment": "left",
+                "columnId": "otel-agent-lens-cluster-info-row",
+                "isTransposed": false,
+                "oneClickFilter": true,
+                "width": 220
+              },
+              {
+                "columnId": "otel-agent-lens-cluster-info-count",
+                "hidden": true,
+                "isMetric": true,
+                "isTransposed": false
+              },
+              {
+                "columnId": "otel-agent-cluster-nodes",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 110
+              },
+              {
+                "columnId": "otel-agent-cluster-data",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              },
+              {
+                "columnId": "otel-agent-cluster-shards",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 110
+              },
+              {
+                "columnId": "otel-agent-cluster-docs",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              }
+            ],
+            "layerId": "otel-agent-lens-cluster-info-layer",
+            "layerType": "data"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-cluster-info-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-node-summary",
+      "attributes": {
+        "description": "",
+        "title": "Node Summary",
+        "visualizationType": "lnsDatatable",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-node-summary-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-node-summary-row",
+                    "otel-agent-lens-node-summary-count",
+                    "otel-agent-node-heap-used",
+                    "otel-agent-node-heap-max",
+                    "otel-agent-node-heap-pct",
+                    "otel-agent-node-cpu",
+                    "otel-agent-node-open-files",
+                    "otel-agent-node-search-total",
+                    "otel-agent-node-index-total"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-node-summary-row": {
+                      "customLabel": true,
+                      "dataType": "string",
+                      "isBucketed": true,
+                      "label": "Node",
+                      "operationType": "terms",
+                      "params": {
+                        "exclude": [],
+                        "excludeIsRegex": false,
+                        "include": [],
+                        "includeIsRegex": false,
+                        "missingBucket": false,
+                        "orderBy": {
+                          "columnId": "otel-agent-lens-node-summary-count",
+                          "type": "column"
+                        },
+                        "orderDirection": "desc",
+                        "otherBucket": true,
+                        "parentFormat": {
+                          "id": "terms"
+                        },
+                        "size": 20
+                      },
+                      "scale": "ordinal",
+                      "sourceField": "elasticsearch.node.name"
+                    },
+                    "otel-agent-lens-node-summary-count": {
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Count of records",
+                      "operationType": "count",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "___records___"
+                    },
+                    "otel-agent-node-heap-used": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Heap Used",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.jvm.mem.heap.used.bytes",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.jvm.mem.heap.used.bytes:*"
+                      }
+                    },
+                    "otel-agent-node-heap-max": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Heap Max",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.jvm.mem.heap.max.bytes",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.jvm.mem.heap.max.bytes:*"
+                      }
+                    },
+                    "otel-agent-node-heap-pct": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Heap %",
+                      "operationType": "average",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.jvm.mem.heap.used.pct",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.jvm.mem.heap.used.pct:*"
+                      }
+                    },
+                    "otel-agent-node-cpu": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "CPU %",
+                      "operationType": "average",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.process.cpu.pct",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.process.cpu.pct:*"
+                      }
+                    },
+                    "otel-agent-node-open-files": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Open Files",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.process.open_file_descriptors",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.process.open_file_descriptors:*"
+                      }
+                    },
+                    "otel-agent-node-search-total": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Query Total",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.indices.search.query_total.count",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.indices.search.query_total.count:*"
+                      }
+                    },
+                    "otel-agent-node-index-total": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Index Total",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.node.stats.indices.indexing.index_total.count",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.node_stats\" and elasticsearch.node.stats.indices.indexing.index_total.count:*"
+                      }
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "columns": [
+              {
+                "alignment": "left",
+                "columnId": "otel-agent-lens-node-summary-row",
+                "isTransposed": false,
+                "oneClickFilter": true,
+                "width": 220
+              },
+              {
+                "columnId": "otel-agent-lens-node-summary-count",
+                "hidden": true,
+                "isMetric": true,
+                "isTransposed": false
+              },
+              {
+                "columnId": "otel-agent-node-heap-used",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 130
+              },
+              {
+                "columnId": "otel-agent-node-heap-max",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 130
+              },
+              {
+                "columnId": "otel-agent-node-heap-pct",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 110
+              },
+              {
+                "columnId": "otel-agent-node-cpu",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 110
+              },
+              {
+                "columnId": "otel-agent-node-open-files",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              },
+              {
+                "columnId": "otel-agent-node-search-total",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              },
+              {
+                "columnId": "otel-agent-node-index-total",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              }
+            ],
+            "layerId": "otel-agent-lens-node-summary-layer",
+            "layerType": "data"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-node-summary-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-index-summary",
+      "attributes": {
+        "description": "",
+        "title": "Index Activity",
+        "visualizationType": "lnsDatatable",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-index-summary-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-index-summary-row",
+                    "otel-agent-lens-index-summary-count",
+                    "otel-agent-index-docs-table",
+                    "otel-agent-index-size-table",
+                    "otel-agent-index-primaries-table",
+                    "otel-agent-index-total-shards-table",
+                    "otel-agent-index-segments-table",
+                    "otel-agent-index-query-total-table",
+                    "otel-agent-index-write-total-table"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-index-summary-row": {
+                      "customLabel": true,
+                      "dataType": "string",
+                      "isBucketed": true,
+                      "label": "Index",
+                      "operationType": "terms",
+                      "params": {
+                        "exclude": [],
+                        "excludeIsRegex": false,
+                        "include": [],
+                        "includeIsRegex": false,
+                        "missingBucket": false,
+                        "orderBy": {
+                          "columnId": "otel-agent-lens-index-summary-count",
+                          "type": "column"
+                        },
+                        "orderDirection": "desc",
+                        "otherBucket": true,
+                        "parentFormat": {
+                          "id": "terms"
+                        },
+                        "size": 20
+                      },
+                      "scale": "ordinal",
+                      "sourceField": "elasticsearch.index.name"
+                    },
+                    "otel-agent-lens-index-summary-count": {
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Count of records",
+                      "operationType": "count",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "___records___"
+                    },
+                    "otel-agent-index-docs-table": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Docs",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.docs.count",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.docs.count:*"
+                      }
+                    },
+                    "otel-agent-index-size-table": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Size",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.store.size_in_bytes",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.store.size_in_bytes:*"
+                      }
+                    },
+                    "otel-agent-index-primaries-table": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Primary Shards",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.shards.primaries",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.shards.primaries:*"
+                      }
+                    },
+                    "otel-agent-index-total-shards-table": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Total Shards",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.shards.total",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.shards.total:*"
+                      }
+                    },
+                    "otel-agent-index-segments-table": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Segments",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.segments.count",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.segments.count:*"
+                      }
+                    },
+                    "otel-agent-index-query-total-table": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Query Total",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.search.query_total",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.search.query_total:*"
+                      }
+                    },
+                    "otel-agent-index-write-total-table": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Write Total",
+                      "operationType": "max",
+                      "scale": "ratio",
+                      "sourceField": "elasticsearch.index.total.indexing.index_total",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.index\" and elasticsearch.index.total.indexing.index_total:*"
+                      }
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "columns": [
+              {
+                "alignment": "left",
+                "columnId": "otel-agent-lens-index-summary-row",
+                "isTransposed": false,
+                "oneClickFilter": true,
+                "width": 220
+              },
+              {
+                "columnId": "otel-agent-lens-index-summary-count",
+                "hidden": true,
+                "isMetric": true,
+                "isTransposed": false
+              },
+              {
+                "columnId": "otel-agent-index-docs-table",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              },
+              {
+                "columnId": "otel-agent-index-size-table",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 130
+              },
+              {
+                "columnId": "otel-agent-index-primaries-table",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              },
+              {
+                "columnId": "otel-agent-index-total-shards-table",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              },
+              {
+                "columnId": "otel-agent-index-segments-table",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 110
+              },
+              {
+                "columnId": "otel-agent-index-query-total-table",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              },
+              {
+                "columnId": "otel-agent-index-write-total-table",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              }
+            ],
+            "layerId": "otel-agent-lens-index-summary-layer",
+            "layerType": "data"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-index-summary-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "lens",
+      "id": "otel-agent-lens-shard-summary",
+      "attributes": {
+        "description": "",
+        "title": "Shard Layout",
+        "visualizationType": "lnsDatatable",
+        "state": {
+          "adHocDataViews": {},
+          "datasourceStates": {
+            "formBased": {
+              "currentIndexPatternId": "otel-elasticsearch-agent-metrics-main",
+              "layers": {
+                "otel-agent-lens-shard-summary-layer": {
+                  "columnOrder": [
+                    "otel-agent-lens-shard-summary-row",
+                    "otel-agent-lens-shard-summary-count",
+                    "otel-agent-shard-node",
+                    "otel-agent-shard-primary"
+                  ],
+                  "columns": {
+                    "otel-agent-lens-shard-summary-row": {
+                      "customLabel": true,
+                      "dataType": "string",
+                      "isBucketed": true,
+                      "label": "Index",
+                      "operationType": "terms",
+                      "params": {
+                        "exclude": [],
+                        "excludeIsRegex": false,
+                        "include": [],
+                        "includeIsRegex": false,
+                        "missingBucket": false,
+                        "orderBy": {
+                          "columnId": "otel-agent-lens-shard-summary-count",
+                          "type": "column"
+                        },
+                        "orderDirection": "desc",
+                        "otherBucket": true,
+                        "parentFormat": {
+                          "id": "terms"
+                        },
+                        "size": 20
+                      },
+                      "scale": "ordinal",
+                      "sourceField": "elasticsearch.index.name"
+                    },
+                    "otel-agent-lens-shard-summary-count": {
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Count of records",
+                      "operationType": "count",
+                      "params": {
+                        "emptyAsNull": true
+                      },
+                      "scale": "ratio",
+                      "sourceField": "___records___"
+                    },
+                    "otel-agent-shard-node": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Records",
+                      "operationType": "count",
+                      "scale": "ratio",
+                      "sourceField": "___records___",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.shard\" and elasticsearch.shard.state:*"
+                      }
+                    },
+                    "otel-agent-shard-primary": {
+                      "customLabel": true,
+                      "dataType": "number",
+                      "isBucketed": false,
+                      "label": "Primary Count",
+                      "operationType": "count",
+                      "scale": "ratio",
+                      "sourceField": "___records___",
+                      "filter": {
+                        "language": "kuery",
+                        "query": "data_stream.dataset: \"elasticsearch.stack_monitoring.shard\" and elasticsearch.shard.primary: true"
+                      }
+                    }
+                  },
+                  "incompleteColumns": {},
+                  "indexPatternId": "otel-elasticsearch-agent-metrics-main",
+                  "sampling": 1
+                }
+              }
+            },
+            "indexpattern": {
+              "layers": {}
+            },
+            "textBased": {
+              "layers": {}
+            }
+          },
+          "filters": [],
+          "internalReferences": [],
+          "query": {
+            "language": "kuery",
+            "query": ""
+          },
+          "visualization": {
+            "columns": [
+              {
+                "alignment": "left",
+                "columnId": "otel-agent-lens-shard-summary-row",
+                "isTransposed": false,
+                "oneClickFilter": true,
+                "width": 220
+              },
+              {
+                "columnId": "otel-agent-lens-shard-summary-count",
+                "hidden": true,
+                "isMetric": true,
+                "isTransposed": false
+              },
+              {
+                "columnId": "otel-agent-shard-node",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 100
+              },
+              {
+                "columnId": "otel-agent-shard-primary",
+                "isMetric": true,
+                "isTransposed": false,
+                "width": 120
+              }
+            ],
+            "layerId": "otel-agent-lens-shard-summary-layer",
+            "layerType": "data"
+          }
+        }
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "indexpattern-datasource-layer-otel-agent-lens-shard-summary-layer",
+          "type": "index-pattern"
+        }
+      ],
+      "coreMigrationVersion": "8.8.0",
+      "created_at": "2026-04-30T16:00:00.000Z",
+      "created_by": "elastic",
+      "managed": false,
+      "typeMigrationVersion": "10.1.0",
+      "updated_at": "2026-04-30T16:00:00.000Z",
+      "updated_by": "elastic",
+      "version": "WzEsMV0="
+    },
+    {
+      "type": "links",
+      "id": "otel-elasticsearch-monitoring-agent-links",
+      "attributes": {
+        "description": "",
+        "layout": "horizontal",
+        "links": [
+          {
+            "destinationRefName": "link_otel-agent-link-overview_dashboard",
+            "id": "otel-agent-link-overview",
+            "label": "Overview",
+            "options": {
+              "openInNewTab": false,
+              "useCurrentDateRange": true,
+              "useCurrentFilters": true
+            },
+            "order": 0,
+            "type": "dashboardLink"
+          },
+          {
+            "destinationRefName": "link_otel-agent-link-nodes_dashboard",
+            "id": "otel-agent-link-nodes",
+            "label": "Nodes",
+            "options": {
+              "openInNewTab": false,
+              "useCurrentDateRange": true,
+              "useCurrentFilters": true
+            },
+            "order": 1,
+            "type": "dashboardLink"
+          },
+          {
+            "destinationRefName": "link_otel-agent-link-indices_dashboard",
+            "id": "otel-agent-link-indices",
+            "label": "Indices",
+            "options": {
+              "openInNewTab": false,
+              "useCurrentDateRange": true,
+              "useCurrentFilters": true
+            },
+            "order": 2,
+            "type": "dashboardLink"
+          }
+        ],
+        "title": "Elasticsearch monitoring navigation"
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-monitoring-agent",
+          "name": "link_otel-agent-link-overview_dashboard",
+          "type": "dashboard"
+        },
+        {
+          "id": "otel-elasticsearch-monitoring-agent-nodes",
+          "name": "link_otel-agent-link-nodes_dashboard",
+          "type": "dashboard"
+        },
+        {
+          "id": "otel-elasticsearch-monitoring-agent-indices",
+          "name": "link_otel-agent-link-indices_dashboard",
+          "type": "dashboard"
+        }
+      ],
+      "managed": false
+    },
+    {
+      "type": "dashboard",
+      "id": "otel-elasticsearch-monitoring-agent",
+      "attributes": {
+        "controlGroupInput": {
+          "chainingSystem": "HIERARCHICAL",
+          "controlStyle": "oneLine",
+          "ignoreParentSettingsJSON": "{\"ignoreFilters\": false, \"ignoreQuery\": false, \"ignoreTimerange\": false, \"ignoreValidations\": false}",
+          "panelsJSON": "{\"otel-agent-control-cluster\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-agent-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.cluster.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Cluster Name(s)\"}, \"grow\": false, \"order\": 0, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-agent-control-node\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-agent-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.node.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Node(s)\"}, \"grow\": true, \"order\": 1, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-agent-control-index\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-agent-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.index.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Index(s)\"}, \"grow\": true, \"order\": 2, \"type\": \"optionsListControl\", \"width\": \"large\"}}",
+          "showApplySelections": false
+        },
+        "title": "Elasticsearch monitoring - Elastic Agent overview",
+        "description": "Overview dashboard for Elasticsearch stack monitoring metrics collected by Elastic Agent with EDOT runtime.",
+        "optionsJSON": "{\"useMargins\": true, \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"hidePanelTitles\": false}",
+        "panelsJSON": "[{\"type\": \"links\", \"panelRefName\": \"panel_otel-agent-panel-links-overview\", \"panelIndex\": \"otel-agent-panel-links-overview\", \"gridData\": {\"i\": \"otel-agent-panel-links-overview\", \"x\": 0, \"y\": 0, \"w\": 48, \"h\": 3}, \"embeddableConfig\": {\"enhancements\": {}, \"savedObjectId\": \"otel-elasticsearch-monitoring-agent-links\", \"title\": \"Navigation\"}}, {\"type\": \"visualization\", \"panelIndex\": \"otel-agent-markdown-overview\", \"gridData\": {\"i\": \"otel-agent-markdown-overview\", \"x\": 0, \"y\": 3, \"w\": 48, \"h\": 3}, \"embeddableConfig\": {\"description\": \"\", \"hidePanelTitles\": true, \"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"savedVis\": {\"title\": \"Agent Header\", \"description\": \"\", \"type\": \"markdown\", \"params\": {\"fontSize\": 12, \"markdown\": \"## Elasticsearch monitoring overview\\nElastic Agent with EDOT runtime using Beat receivers and ECS-compatible routing.\", \"openLinksInNewTab\": false}, \"uiState\": {}, \"data\": {\"aggs\": [], \"searchSource\": {\"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"filter\": []}}}, \"title\": \"\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-cluster-info\", \"panelIndex\": \"otel-agent-panel-cluster-info\", \"gridData\": {\"i\": \"otel-agent-panel-cluster-info\", \"x\": 0, \"y\": 6, \"w\": 34, \"h\": 8}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-cluster-info\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Cluster Info\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-health\", \"panelIndex\": \"otel-agent-panel-health\", \"gridData\": {\"i\": \"otel-agent-panel-health\", \"x\": 34, \"y\": 6, \"w\": 14, \"h\": 8}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-health-status\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Cluster Health\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-nodes\", \"panelIndex\": \"otel-agent-panel-nodes\", \"gridData\": {\"i\": \"otel-agent-panel-nodes\", \"x\": 0, \"y\": 14, \"w\": 6, \"h\": 5}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-nodes\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Nodes\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-data-nodes\", \"panelIndex\": \"otel-agent-panel-data-nodes\", \"gridData\": {\"i\": \"otel-agent-panel-data-nodes\", \"x\": 6, \"y\": 14, \"w\": 6, \"h\": 5}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-data-nodes\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Data Nodes\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-indices\", \"panelIndex\": \"otel-agent-panel-indices\", \"gridData\": {\"i\": \"otel-agent-panel-indices\", \"x\": 12, \"y\": 14, \"w\": 6, \"h\": 5}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-indices-count\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Indices\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-shards\", \"panelIndex\": \"otel-agent-panel-shards\", \"gridData\": {\"i\": \"otel-agent-panel-shards\", \"x\": 18, \"y\": 14, \"w\": 6, \"h\": 5}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-shards-count\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Shards\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-docs\", \"panelIndex\": \"otel-agent-panel-docs\", \"gridData\": {\"i\": \"otel-agent-panel-docs\", \"x\": 24, \"y\": 14, \"w\": 6, \"h\": 5}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-docs-total\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Docs\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-primary-shards\", \"panelIndex\": \"otel-agent-panel-primary-shards\", \"gridData\": {\"i\": \"otel-agent-panel-primary-shards\", \"x\": 30, \"y\": 14, \"w\": 6, \"h\": 5}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-primary-shards\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Primary Shards\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-cluster-store-size\", \"panelIndex\": \"otel-agent-panel-cluster-store-size\", \"gridData\": {\"i\": \"otel-agent-panel-cluster-store-size\", \"x\": 36, \"y\": 14, \"w\": 6, \"h\": 5}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-cluster-store-size\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Store Size\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-heap-pct\", \"panelIndex\": \"otel-agent-panel-heap-pct\", \"gridData\": {\"i\": \"otel-agent-panel-heap-pct\", \"x\": 0, \"y\": 19, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-heap-pct\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Heap Used %\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-query-total\", \"panelIndex\": \"otel-agent-panel-query-total\", \"gridData\": {\"i\": \"otel-agent-panel-query-total\", \"x\": 12, \"y\": 19, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-query-total\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Query Total\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-index-total\", \"panelIndex\": \"otel-agent-panel-index-total\", \"gridData\": {\"i\": \"otel-agent-panel-index-total\", \"x\": 24, \"y\": 19, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-index-total\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Index Total\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-store-size\", \"panelIndex\": \"otel-agent-panel-store-size\", \"gridData\": {\"i\": \"otel-agent-panel-store-size\", \"x\": 36, \"y\": 19, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-store-size\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Node Store Size\"}}]",
+        "timeRestore": false,
+        "kibanaSavedObjectMeta": {
+          "searchSourceJSON": "{\"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"filter\": []}"
+        },
+        "version": 1
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-monitoring-agent-links",
+          "name": "otel-agent-panel-links-overview:panel_otel-agent-panel-links-overview",
+          "type": "links"
+        },
+        {
+          "id": "otel-agent-lens-cluster-info",
+          "name": "otel-agent-panel-cluster-info:panel_otel-agent-panel-cluster-info",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-health-status",
+          "name": "otel-agent-panel-health:panel_otel-agent-panel-health",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-nodes",
+          "name": "otel-agent-panel-nodes:panel_otel-agent-panel-nodes",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-data-nodes",
+          "name": "otel-agent-panel-data-nodes:panel_otel-agent-panel-data-nodes",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-indices-count",
+          "name": "otel-agent-panel-indices:panel_otel-agent-panel-indices",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-shards-count",
+          "name": "otel-agent-panel-shards:panel_otel-agent-panel-shards",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-docs-total",
+          "name": "otel-agent-panel-docs:panel_otel-agent-panel-docs",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-primary-shards",
+          "name": "otel-agent-panel-primary-shards:panel_otel-agent-panel-primary-shards",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-cluster-store-size",
+          "name": "otel-agent-panel-cluster-store-size:panel_otel-agent-panel-cluster-store-size",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-heap-pct",
+          "name": "otel-agent-panel-heap-pct:panel_otel-agent-panel-heap-pct",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-query-total",
+          "name": "otel-agent-panel-query-total:panel_otel-agent-panel-query-total",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-index-total",
+          "name": "otel-agent-panel-index-total:panel_otel-agent-panel-index-total",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-store-size",
+          "name": "otel-agent-panel-store-size:panel_otel-agent-panel-store-size",
+          "type": "lens"
+        },
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "controlGroup_otel-agent-control-cluster:optionsListDataView",
+          "type": "index-pattern"
+        },
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "controlGroup_otel-agent-control-node:optionsListDataView",
+          "type": "index-pattern"
+        },
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "controlGroup_otel-agent-control-index:optionsListDataView",
+          "type": "index-pattern"
+        }
+      ]
+    },
+    {
+      "type": "dashboard",
+      "id": "otel-elasticsearch-monitoring-agent-nodes",
+      "attributes": {
+        "controlGroupInput": {
+          "chainingSystem": "HIERARCHICAL",
+          "controlStyle": "oneLine",
+          "ignoreParentSettingsJSON": "{\"ignoreFilters\": false, \"ignoreQuery\": false, \"ignoreTimerange\": false, \"ignoreValidations\": false}",
+          "panelsJSON": "{\"otel-agent-control-cluster\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-agent-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.cluster.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Cluster Name(s)\"}, \"grow\": false, \"order\": 0, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-agent-control-node\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-agent-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.node.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Node(s)\"}, \"grow\": true, \"order\": 1, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-agent-control-index\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-agent-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.index.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Index(s)\"}, \"grow\": true, \"order\": 2, \"type\": \"optionsListControl\", \"width\": \"large\"}}",
+          "showApplySelections": false
+        },
+        "title": "Elasticsearch monitoring - Elastic Agent nodes",
+        "description": "Node dashboard for Elasticsearch stack monitoring metrics collected by Elastic Agent with EDOT runtime.",
+        "optionsJSON": "{\"useMargins\": true, \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"hidePanelTitles\": false}",
+        "panelsJSON": "[{\"type\": \"links\", \"panelRefName\": \"panel_otel-agent-panel-links-nodes\", \"panelIndex\": \"otel-agent-panel-links-nodes\", \"gridData\": {\"i\": \"otel-agent-panel-links-nodes\", \"x\": 0, \"y\": 0, \"w\": 48, \"h\": 3}, \"embeddableConfig\": {\"enhancements\": {}, \"savedObjectId\": \"otel-elasticsearch-monitoring-agent-links\", \"title\": \"Navigation\"}}, {\"type\": \"visualization\", \"panelIndex\": \"otel-agent-markdown-nodes\", \"gridData\": {\"i\": \"otel-agent-markdown-nodes\", \"x\": 0, \"y\": 3, \"w\": 48, \"h\": 3}, \"embeddableConfig\": {\"description\": \"\", \"hidePanelTitles\": true, \"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"savedVis\": {\"title\": \"Agent Header\", \"description\": \"\", \"type\": \"markdown\", \"params\": {\"fontSize\": 12, \"markdown\": \"## Elasticsearch monitoring nodes\\nJVM, CPU, open files, queues, rejections, and node summaries from the Elasticsearch integration.\", \"openLinksInNewTab\": false}, \"uiState\": {}, \"data\": {\"aggs\": [], \"searchSource\": {\"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"filter\": []}}}, \"title\": \"\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-open-files\", \"panelIndex\": \"otel-agent-panel-open-files\", \"gridData\": {\"i\": \"otel-agent-panel-open-files\", \"x\": 0, \"y\": 6, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-open-files\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Open Files\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-cpu-pct\", \"panelIndex\": \"otel-agent-panel-cpu-pct\", \"gridData\": {\"i\": \"otel-agent-panel-cpu-pct\", \"x\": 12, \"y\": 6, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-cpu-pct\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"CPU %\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-search-queue\", \"panelIndex\": \"otel-agent-panel-search-queue\", \"gridData\": {\"i\": \"otel-agent-panel-search-queue\", \"x\": 24, \"y\": 6, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-search-queue\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Search Queue\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-write-queue\", \"panelIndex\": \"otel-agent-panel-write-queue\", \"gridData\": {\"i\": \"otel-agent-panel-write-queue\", \"x\": 36, \"y\": 6, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-write-queue\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Write Queue\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-search-rejected\", \"panelIndex\": \"otel-agent-panel-search-rejected\", \"gridData\": {\"i\": \"otel-agent-panel-search-rejected\", \"x\": 0, \"y\": 13, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-search-rejected\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Search Rejected\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-write-rejected\", \"panelIndex\": \"otel-agent-panel-write-rejected\", \"gridData\": {\"i\": \"otel-agent-panel-write-rejected\", \"x\": 12, \"y\": 13, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-write-rejected\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Write Rejected\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-young-gc\", \"panelIndex\": \"otel-agent-panel-young-gc\", \"gridData\": {\"i\": \"otel-agent-panel-young-gc\", \"x\": 24, \"y\": 13, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-young-gc\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Young GC Total\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-old-gc\", \"panelIndex\": \"otel-agent-panel-old-gc\", \"gridData\": {\"i\": \"otel-agent-panel-old-gc\", \"x\": 36, \"y\": 13, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-old-gc\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Old GC Total\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-node-summary\", \"panelIndex\": \"otel-agent-panel-node-summary\", \"gridData\": {\"i\": \"otel-agent-panel-node-summary\", \"x\": 0, \"y\": 20, \"w\": 48, \"h\": 14}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-node-summary\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Node Summary\"}}]",
+        "timeRestore": false,
+        "kibanaSavedObjectMeta": {
+          "searchSourceJSON": "{\"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"filter\": []}"
+        },
+        "version": 1
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-monitoring-agent-links",
+          "name": "otel-agent-panel-links-nodes:panel_otel-agent-panel-links-nodes",
+          "type": "links"
+        },
+        {
+          "id": "otel-agent-lens-open-files",
+          "name": "otel-agent-panel-open-files:panel_otel-agent-panel-open-files",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-cpu-pct",
+          "name": "otel-agent-panel-cpu-pct:panel_otel-agent-panel-cpu-pct",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-search-queue",
+          "name": "otel-agent-panel-search-queue:panel_otel-agent-panel-search-queue",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-write-queue",
+          "name": "otel-agent-panel-write-queue:panel_otel-agent-panel-write-queue",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-search-rejected",
+          "name": "otel-agent-panel-search-rejected:panel_otel-agent-panel-search-rejected",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-write-rejected",
+          "name": "otel-agent-panel-write-rejected:panel_otel-agent-panel-write-rejected",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-young-gc",
+          "name": "otel-agent-panel-young-gc:panel_otel-agent-panel-young-gc",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-old-gc",
+          "name": "otel-agent-panel-old-gc:panel_otel-agent-panel-old-gc",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-node-summary",
+          "name": "otel-agent-panel-node-summary:panel_otel-agent-panel-node-summary",
+          "type": "lens"
+        },
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "controlGroup_otel-agent-control-cluster:optionsListDataView",
+          "type": "index-pattern"
+        },
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "controlGroup_otel-agent-control-node:optionsListDataView",
+          "type": "index-pattern"
+        },
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "controlGroup_otel-agent-control-index:optionsListDataView",
+          "type": "index-pattern"
+        }
+      ]
+    },
+    {
+      "type": "dashboard",
+      "id": "otel-elasticsearch-monitoring-agent-indices",
+      "attributes": {
+        "controlGroupInput": {
+          "chainingSystem": "HIERARCHICAL",
+          "controlStyle": "oneLine",
+          "ignoreParentSettingsJSON": "{\"ignoreFilters\": false, \"ignoreQuery\": false, \"ignoreTimerange\": false, \"ignoreValidations\": false}",
+          "panelsJSON": "{\"otel-agent-control-cluster\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-agent-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.cluster.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Cluster Name(s)\"}, \"grow\": false, \"order\": 0, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-agent-control-node\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-agent-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.node.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Node(s)\"}, \"grow\": true, \"order\": 1, \"type\": \"optionsListControl\", \"width\": \"medium\"}, \"otel-agent-control-index\": {\"explicitInput\": {\"dataViewId\": \"otel-elasticsearch-agent-metrics-main\", \"exclude\": false, \"existsSelected\": false, \"fieldName\": \"elasticsearch.index.name\", \"runPastTimeout\": true, \"searchTechnique\": \"wildcard\", \"selectedOptions\": [], \"sort\": {\"by\": \"_count\", \"direction\": \"desc\"}, \"title\": \"Index(s)\"}, \"grow\": true, \"order\": 2, \"type\": \"optionsListControl\", \"width\": \"large\"}}",
+          "showApplySelections": false
+        },
+        "title": "Elasticsearch monitoring - Elastic Agent indices",
+        "description": "Index dashboard for Elasticsearch stack monitoring metrics collected by Elastic Agent with EDOT runtime.",
+        "optionsJSON": "{\"useMargins\": true, \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"hidePanelTitles\": false}",
+        "panelsJSON": "[{\"type\": \"links\", \"panelRefName\": \"panel_otel-agent-panel-links-indices\", \"panelIndex\": \"otel-agent-panel-links-indices\", \"gridData\": {\"i\": \"otel-agent-panel-links-indices\", \"x\": 0, \"y\": 0, \"w\": 48, \"h\": 3}, \"embeddableConfig\": {\"enhancements\": {}, \"savedObjectId\": \"otel-elasticsearch-monitoring-agent-links\", \"title\": \"Navigation\"}}, {\"type\": \"visualization\", \"panelIndex\": \"otel-agent-markdown-indices\", \"gridData\": {\"i\": \"otel-agent-markdown-indices\", \"x\": 0, \"y\": 3, \"w\": 48, \"h\": 3}, \"embeddableConfig\": {\"description\": \"\", \"hidePanelTitles\": true, \"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"savedVis\": {\"title\": \"Agent Header\", \"description\": \"\", \"type\": \"markdown\", \"params\": {\"fontSize\": 12, \"markdown\": \"## Elasticsearch monitoring indices\\nPer-index docs, size, segments, query totals, write totals, and shard layout.\", \"openLinksInNewTab\": false}, \"uiState\": {}, \"data\": {\"aggs\": [], \"searchSource\": {\"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"filter\": []}}}, \"title\": \"\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-index-docs\", \"panelIndex\": \"otel-agent-panel-index-docs\", \"gridData\": {\"i\": \"otel-agent-panel-index-docs\", \"x\": 0, \"y\": 6, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-index-docs\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Index Docs\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-index-size\", \"panelIndex\": \"otel-agent-panel-index-size\", \"gridData\": {\"i\": \"otel-agent-panel-index-size\", \"x\": 12, \"y\": 6, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-index-size\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Index Size\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-index-segments\", \"panelIndex\": \"otel-agent-panel-index-segments\", \"gridData\": {\"i\": \"otel-agent-panel-index-segments\", \"x\": 24, \"y\": 6, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-index-segments\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Segments\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-index-query-total\", \"panelIndex\": \"otel-agent-panel-index-query-total\", \"gridData\": {\"i\": \"otel-agent-panel-index-query-total\", \"x\": 0, \"y\": 13, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-index-query-total\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Index Query Total\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-index-write-total\", \"panelIndex\": \"otel-agent-panel-index-write-total\", \"gridData\": {\"i\": \"otel-agent-panel-index-write-total\", \"x\": 12, \"y\": 13, \"w\": 12, \"h\": 7}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-index-write-total\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Index Write Total\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-index-summary\", \"panelIndex\": \"otel-agent-panel-index-summary\", \"gridData\": {\"i\": \"otel-agent-panel-index-summary\", \"x\": 0, \"y\": 20, \"w\": 48, \"h\": 12}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-index-summary\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Index Activity\"}}, {\"type\": \"lens\", \"panelRefName\": \"panel_otel-agent-panel-shard-summary\", \"panelIndex\": \"otel-agent-panel-shard-summary\", \"gridData\": {\"i\": \"otel-agent-panel-shard-summary\", \"x\": 0, \"y\": 32, \"w\": 48, \"h\": 10}, \"embeddableConfig\": {\"enhancements\": {\"dynamicActions\": {\"events\": []}}, \"filters\": [], \"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"savedObjectId\": \"otel-agent-lens-shard-summary\", \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"title\": \"Shard Layout\"}}]",
+        "timeRestore": false,
+        "kibanaSavedObjectMeta": {
+          "searchSourceJSON": "{\"query\": {\"language\": \"kuery\", \"query\": \"\"}, \"filter\": []}"
+        },
+        "version": 1
+      },
+      "references": [
+        {
+          "id": "otel-elasticsearch-monitoring-agent-links",
+          "name": "otel-agent-panel-links-indices:panel_otel-agent-panel-links-indices",
+          "type": "links"
+        },
+        {
+          "id": "otel-agent-lens-index-docs",
+          "name": "otel-agent-panel-index-docs:panel_otel-agent-panel-index-docs",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-index-size",
+          "name": "otel-agent-panel-index-size:panel_otel-agent-panel-index-size",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-index-segments",
+          "name": "otel-agent-panel-index-segments:panel_otel-agent-panel-index-segments",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-index-query-total",
+          "name": "otel-agent-panel-index-query-total:panel_otel-agent-panel-index-query-total",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-index-write-total",
+          "name": "otel-agent-panel-index-write-total:panel_otel-agent-panel-index-write-total",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-index-summary",
+          "name": "otel-agent-panel-index-summary:panel_otel-agent-panel-index-summary",
+          "type": "lens"
+        },
+        {
+          "id": "otel-agent-lens-shard-summary",
+          "name": "otel-agent-panel-shard-summary:panel_otel-agent-panel-shard-summary",
+          "type": "lens"
+        },
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "controlGroup_otel-agent-control-cluster:optionsListDataView",
+          "type": "index-pattern"
+        },
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "controlGroup_otel-agent-control-node:optionsListDataView",
+          "type": "index-pattern"
+        },
+        {
+          "id": "otel-elasticsearch-agent-metrics-main",
+          "name": "controlGroup_otel-agent-control-index:optionsListDataView",
+          "type": "index-pattern"
+        }
+      ]
+    }
+  ]
+}

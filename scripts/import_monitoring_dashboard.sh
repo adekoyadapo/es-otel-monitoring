@@ -16,7 +16,7 @@ if ! dashboard_import_supported; then
 fi
 
 python3 ./scripts/build_otel_dashboard_ndjson.py >/dev/null
-python3 ./scripts/build_otel_contrib_dashboard_ndjson.py >/dev/null
+python3 ./scripts/build_otel_agent_dashboard_ndjson.py >/dev/null
 DASHBOARD_PATH="$(current_dashboard_path)"
 DASHBOARD_ID="$(current_dashboard_id)"
 

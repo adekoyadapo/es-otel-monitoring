@@ -1,0 +1,160 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: edot-main-logs
+  namespace: lab-main
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: edot-main-logs
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "namespaces", "nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: edot-main-logs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edot-main-logs
+subjects:
+  - kind: ServiceAccount
+    name: edot-main-logs
+    namespace: lab-main
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edot-main-logs-config
+  namespace: lab-main
+data:
+  agent.yml: |
+    outputs:
+      default:
+        type: elasticsearch
+        hosts:
+          - ${MONITORING_ELASTICSEARCH_URL}
+        username: ${MONITORING_ELASTICSEARCH_USERNAME}
+        password: ${MONITORING_ELASTICSEARCH_PASSWORD}
+        ssl.certificate_authorities:
+          - /etc/elastic-agent/certs/ca.crt
+
+    agent.logging.to_stderr: true
+    agent.monitoring:
+      enabled: true
+      logs: false
+      metrics: false
+      http:
+        enabled: true
+        host: 0.0.0.0
+        port: 6792
+
+    inputs:
+      - id: elasticsearch-server-logs
+        type: filestream
+        use_output: default
+        data_stream.namespace: main
+        streams:
+          - id: elasticsearch-server-stream
+            data_stream.dataset: elasticsearch.server
+            prospector.scanner.symlinks: true
+            parsers:
+              - container: ~
+            paths:
+              - /var/log/containers/*_lab-main_elasticsearch-*.log
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: edot-main-logs
+  namespace: lab-main
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: edot-main-logs
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: edot-main-logs
+    spec:
+      serviceAccountName: edot-main-logs
+      containers:
+        - name: edot-main-logs
+          image: docker.elastic.co/elastic-agent/elastic-agent:__ELASTIC_AGENT_VERSION__
+          args:
+            - -c
+            - /etc/elastic-agent/agent.yml
+            - -e
+          env:
+            - name: MONITORING_ELASTICSEARCH_URL
+              valueFrom:
+                secretKeyRef:
+                  name: edot-monitoring-credentials
+                  key: monitoring-elasticsearch-url
+            - name: MONITORING_ELASTICSEARCH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: edot-monitoring-credentials
+                  key: monitoring-elasticsearch-username
+            - name: MONITORING_ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: edot-monitoring-credentials
+                  key: monitoring-elasticsearch-password
+          ports:
+            - containerPort: 6792
+              name: health
+          readinessProbe:
+            httpGet:
+              path: /liveness?failon=degraded
+              port: 6792
+          livenessProbe:
+            httpGet:
+              path: /liveness?failon=failed
+              port: 6792
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          volumeMounts:
+            - name: config
+              mountPath: /etc/elastic-agent/agent.yml
+              subPath: agent.yml
+            - name: state
+              mountPath: /usr/share/elastic-agent/state
+            - name: root-ca
+              mountPath: /etc/elastic-agent/certs
+              readOnly: true
+            - name: varlogcontainers
+              mountPath: /var/log/containers
+              readOnly: true
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: edot-main-logs-config
+        - name: state
+          emptyDir: {}
+        - name: root-ca
+          secret:
+            secretName: edot-root-ca
+        - name: varlogcontainers
+          hostPath:
+            path: /var/log/containers
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods

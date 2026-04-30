@@ -11,7 +11,7 @@ MONITORING_ES_NODES ?= 2
 MONITORING_ES_CPU ?= 500m
 MONITORING_ES_MEMORY ?= 1Gi
 EDOT_MONITORING_MODE ?= autoops
-OTEL_CONTRIB_COLLECTOR_VERSION ?= 0.148.0
+ELASTIC_AGENT_VERSION ?= $(ES_VERSION)
 SEARCH_LOAD_STREAM_PREFIX ?= logs-sampleapp
 SEARCH_LOAD_STREAM_NAMESPACE ?= default
 SEARCH_LOAD_STREAM_COUNT ?= 5
@@ -33,7 +33,7 @@ export MONITORING_ES_NODES
 export MONITORING_ES_CPU
 export MONITORING_ES_MEMORY
 export EDOT_MONITORING_MODE
-export OTEL_CONTRIB_COLLECTOR_VERSION
+export ELASTIC_AGENT_VERSION
 export SEARCH_LOAD_STREAM_PREFIX
 export SEARCH_LOAD_STREAM_NAMESPACE
 export SEARCH_LOAD_STREAM_COUNT
@@ -71,8 +71,8 @@ help:
 	@echo "  MONITORING_ES_NODES=<n>   Monitoring Elasticsearch node count"
 	@echo "  MONITORING_ES_CPU=<cpu>   Monitoring Elasticsearch CPU request"
 	@echo "  MONITORING_ES_MEMORY=<m>  Monitoring Elasticsearch memory request and limit"
-	@echo "  EDOT_MONITORING_MODE=<m>  Monitoring path: autoops or contrib"
-	@echo "  OTEL_CONTRIB_COLLECTOR_VERSION=<v>  Contrib collector version for contrib mode"
+	@echo "  EDOT_MONITORING_MODE=<m>  Monitoring path: autoops or agent"
+	@echo "  ELASTIC_AGENT_VERSION=<v> Elastic Agent version for agent mode"
 	@echo "  SEARCH_LOAD_STREAM_COUNT=<n>         Number of synthetic data streams"
 	@echo "  SEARCH_LOAD_WRITE_BATCH_SIZE=<n>     Bulk write size per cycle"
 	@echo "  SEARCH_LOAD_SEARCHES_PER_CYCLE=<n>   Searches per workload cycle"

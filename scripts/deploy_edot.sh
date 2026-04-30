@@ -79,14 +79,39 @@ create_role_and_user() {
   fi
 }
 
-create_role_and_user \
+create_user() {
+  local url="$1"
+  local elastic_password="$2"
+  local username="$3"
+  local user_password="$4"
+  local user_roles_json="$5"
+  local user_code=""
+
+  for _ in $(seq 1 20); do
+    user_code="$(
+      curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${elastic_password}" \
+        -H 'Content-Type: application/json' \
+        -X POST "${url}/_security/user/${username}" \
+        -d "{\"password\":\"${user_password}\",\"roles\":${user_roles_json}}" || true
+    )"
+    if [[ "${user_code}" == "200" ]]; then
+      break
+    fi
+    sleep 3
+  done
+
+  if [[ "${user_code}" != "200" ]]; then
+    echo "Failed to create user ${username} on ${url}" >&2
+    exit 1
+  fi
+}
+
+create_user \
   "https://es-main.${HOST_IP}.sslip.io" \
   "${MAIN_ELASTIC_PASSWORD}" \
   "edot_metrics_reader" \
-  '{"cluster":["monitor"],"indices":[{"names":["*"],"privileges":["monitor","view_index_metadata"]}]}' \
-  "edot_metrics_reader" \
   "EdotMetrics123!" \
-  '["edot_metrics_reader"]'
+  '["remote_monitoring_collector"]'
 
 create_role_and_user \
   "https://es-main.${HOST_IP}.sslip.io" \
@@ -135,6 +160,12 @@ kubectl -n lab-monitoring create secret generic edot-monitoring-credentials \
   --from-literal=monitoring-elasticsearch-password="EdotIngest123!" \
   --dry-run=client -o yaml | kubectl apply -f -
 
+kubectl -n lab-main create secret generic edot-monitoring-credentials \
+  --from-literal=monitoring-elasticsearch-url="https://elasticsearch-monitoring-es-http.lab-monitoring.svc.cluster.local:9200" \
+  --from-literal=monitoring-elasticsearch-username="edot_ingest_writer" \
+  --from-literal=monitoring-elasticsearch-password="EdotIngest123!" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
 if monitoring_mode_autoops; then
   kubectl -n lab-monitoring create secret generic edot-autoops-tsds-credentials \
     --from-literal=monitoring-elasticsearch-url="https://elasticsearch-monitoring-es-http.lab-monitoring.svc.cluster.local:9200" \
@@ -147,13 +178,16 @@ if monitoring_mode_autoops; then
     --dry-run=client -o yaml | kubectl apply -f -
 fi
 
-kubectl apply -f manifests/edot/gateway.yaml
-kubectl apply -f manifests/edot/main-logs.yaml
-
-if monitoring_mode_contrib; then
-  sed "s|__OTEL_CONTRIB_COLLECTOR_VERSION__|${OTEL_CONTRIB_COLLECTOR_VERSION}|g" manifests/edot/main-metrics-contrib.yaml | kubectl apply -f -
+if monitoring_mode_agent; then
+  kubectl -n lab-monitoring delete deploy edot-gateway --ignore-not-found
+  kubectl -n lab-monitoring delete service edot-gateway --ignore-not-found
+  kubectl -n lab-monitoring delete configmap edot-gateway-config --ignore-not-found
   kubectl -n lab-monitoring delete cronjob edot-autoops-tsds-deriver --ignore-not-found
+  sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-metrics-agent.yaml | kubectl apply -f -
+  sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-logs-agent.yaml | kubectl apply -f -
 else
+  kubectl apply -f manifests/edot/gateway.yaml
+  kubectl apply -f manifests/edot/main-logs.yaml
   kubectl apply -f manifests/edot/main-metrics.yaml
   kubectl apply -f manifests/edot/autoops-tsds-deriver.yaml
 fi
@@ -164,10 +198,13 @@ if monitoring_mode_autoops; then
   RESET_AUTOOPS_TSDS=true bash ./scripts/install_autoops_tsds_assets.sh
 fi
 
-kubectl -n lab-monitoring rollout status deploy/edot-gateway --timeout=300s
 kubectl -n lab-main rollout status deploy/edot-main-metrics --timeout=300s
 kubectl -n lab-main rollout status ds/edot-main-logs --timeout=300s
 kubectl -n lab-main rollout status deploy/main-search-load --timeout=300s
+
+if monitoring_mode_autoops; then
+  kubectl -n lab-monitoring rollout status deploy/edot-gateway --timeout=300s
+fi
 
 if monitoring_mode_autoops; then
   TSDS_BOOTSTRAP_JOB="edot-autoops-tsds-bootstrap-$(date +%s)"

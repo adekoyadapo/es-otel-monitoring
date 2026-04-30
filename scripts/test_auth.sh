@@ -57,12 +57,14 @@ MONITORING_ELASTIC_PASSWORD="$(kubectl -n lab-monitoring get secret elasticsearc
 ES_METRICS_DATASTREAM_PRESENT=0
 ES_LOGS_DATASTREAM_PRESENT=0
 DERIVED_TSDS_PRESENT=0
-CONTRIB_METRICS_PRESENT=0
+AGENT_METRICS_PRESENT=0
+AGENT_LOGS_PRESENT=0
 for _ in $(seq 1 20); do
   ES_METRICS_DATASTREAM_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${AUTOOPS_SOURCE_DATASTREAM}")"
   ES_LOGS_DATASTREAM_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/logs-elasticsearch.logs.otel-main")"
   DERIVED_TSDS_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${AUTOOPS_DERIVED_TSDS}")"
-  CONTRIB_METRICS_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${CONTRIB_METRICS_DATASTREAM}")"
+  AGENT_METRICS_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${AGENT_METRICS_DATASTREAM_PATTERN}")"
+  AGENT_LOGS_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${AGENT_LOGS_DATASTREAM_PATTERN}")"
   if [[ "${ES_METRICS_DATASTREAM_CODE}" == "200" ]]; then
     ES_METRICS_DATASTREAM_PRESENT=1
   fi
@@ -72,30 +74,33 @@ for _ in $(seq 1 20); do
   if [[ "${DERIVED_TSDS_CODE}" == "200" ]]; then
     DERIVED_TSDS_PRESENT=1
   fi
-  if [[ "${CONTRIB_METRICS_CODE}" == "200" ]]; then
-    CONTRIB_METRICS_PRESENT=1
+  if [[ "${AGENT_METRICS_CODE}" == "200" ]]; then
+    AGENT_METRICS_PRESENT=1
+  fi
+  if [[ "${AGENT_LOGS_CODE}" == "200" ]]; then
+    AGENT_LOGS_PRESENT=1
   fi
   ES_METRICS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${AUTOOPS_SOURCE_DATASTREAM}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
   ES_LOGS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/logs-elasticsearch.logs.otel-main/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
   DERIVED_TSDS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${AUTOOPS_DERIVED_TSDS}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
-  CONTRIB_METRICS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${CONTRIB_METRICS_DATASTREAM}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
+  AGENT_METRICS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${AGENT_METRICS_DATASTREAM_TARGET}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
+  AGENT_LOGS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${AGENT_LOGS_DATASTREAM_PATTERN}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
   if monitoring_mode_autoops; then
     if [[ "${ES_METRICS_DATASTREAM_PRESENT}" -eq 1 && "${ES_LOGS_DATASTREAM_PRESENT}" -eq 1 && "${DERIVED_TSDS_PRESENT}" -eq 1 && "${ES_METRICS_COUNT:-0}" -gt 0 && "${ES_LOGS_COUNT:-0}" -gt 0 && "${DERIVED_TSDS_COUNT:-0}" -gt 0 ]]; then
       break
     fi
   else
-    if [[ "${CONTRIB_METRICS_PRESENT}" -eq 1 && "${ES_LOGS_DATASTREAM_PRESENT}" -eq 1 && "${CONTRIB_METRICS_COUNT:-0}" -gt 0 && "${ES_LOGS_COUNT:-0}" -gt 0 ]]; then
+    if [[ "${AGENT_METRICS_PRESENT}" -eq 1 && "${AGENT_LOGS_PRESENT}" -eq 1 && "${AGENT_METRICS_COUNT:-0}" -gt 0 && "${AGENT_LOGS_COUNT:-0}" -gt 0 ]]; then
       break
     fi
   fi
   sleep 15
 done
 
-if [[ "${ES_LOGS_DATASTREAM_PRESENT}" -ne 1 ]]; then
-  fail "Logs data stream logs-elasticsearch.logs.otel-main was not created in the monitoring cluster"
-fi
-
 if monitoring_mode_autoops; then
+  if [[ "${ES_LOGS_DATASTREAM_PRESENT}" -ne 1 ]]; then
+    fail "Logs data stream logs-elasticsearch.logs.otel-main was not created in the monitoring cluster"
+  fi
   if [[ "${ES_METRICS_DATASTREAM_PRESENT}" -ne 1 ]]; then
     fail "Metrics source data stream ${AUTOOPS_SOURCE_DATASTREAM} was not created in the monitoring cluster"
   fi
@@ -103,8 +108,11 @@ if monitoring_mode_autoops; then
     fail "Derived TSDS ${AUTOOPS_DERIVED_TSDS} was not created in the monitoring cluster"
   fi
 else
-  if [[ "${CONTRIB_METRICS_PRESENT}" -ne 1 ]]; then
-    fail "Contrib metrics data stream ${CONTRIB_METRICS_DATASTREAM} was not created in the monitoring cluster"
+  if [[ "${AGENT_METRICS_PRESENT}" -ne 1 ]]; then
+    fail "Elastic Agent metrics data streams matching ${AGENT_METRICS_DATASTREAM_PATTERN} were not created in the monitoring cluster"
+  fi
+  if [[ "${AGENT_LOGS_PRESENT}" -ne 1 ]]; then
+    fail "Elastic Agent logs data streams matching ${AGENT_LOGS_DATASTREAM_PATTERN} were not created in the monitoring cluster"
   fi
 fi
 echo "${GREEN}  OK: expected EDOT data streams are present${RESET}"
@@ -116,10 +124,10 @@ if monitoring_mode_autoops; then
   fi
   echo "${GREEN}  OK: autoops source metrics data stream has ${ES_METRICS_COUNT} documents${RESET}"
 else
-  if [[ "${CONTRIB_METRICS_COUNT:-0}" -le 0 ]]; then
-    fail "No contrib Elasticsearch metrics documents were shipped to the monitoring cluster"
+  if [[ "${AGENT_METRICS_COUNT:-0}" -le 0 ]]; then
+    fail "No Elastic Agent Elasticsearch metrics documents were shipped to the monitoring cluster"
   fi
-  echo "${GREEN}  OK: contrib metrics data stream has ${CONTRIB_METRICS_COUNT} documents${RESET}"
+  echo "${GREEN}  OK: Elastic Agent metrics data streams have ${AGENT_METRICS_COUNT} documents${RESET}"
 fi
 
 echo "[7/11] Verifying derived TSDS documents were shipped"
@@ -129,14 +137,21 @@ if monitoring_mode_autoops; then
   fi
   echo "${GREEN}  OK: derived TSDS has ${DERIVED_TSDS_COUNT} documents${RESET}"
 else
-  echo "${BLUE}  SKIP: derived TSDS is not used in contrib mode${RESET}"
+  echo "${BLUE}  SKIP: derived TSDS is not used in agent mode${RESET}"
 fi
 
 echo "[8/11] Verifying log documents were shipped"
-if [[ "${ES_LOGS_COUNT:-0}" -le 0 ]]; then
-  fail "No Elasticsearch log documents were shipped to the monitoring cluster"
+if monitoring_mode_autoops; then
+  if [[ "${ES_LOGS_COUNT:-0}" -le 0 ]]; then
+    fail "No Elasticsearch log documents were shipped to the monitoring cluster"
+  fi
+  echo "${GREEN}  OK: logs data stream has ${ES_LOGS_COUNT} documents${RESET}"
+else
+  if [[ "${AGENT_LOGS_COUNT:-0}" -le 0 ]]; then
+    fail "No Elastic Agent Elasticsearch log documents were shipped to the monitoring cluster"
+  fi
+  echo "${GREEN}  OK: Elastic Agent logs data streams have ${AGENT_LOGS_COUNT} documents${RESET}"
 fi
-echo "${GREEN}  OK: logs data stream has ${ES_LOGS_COUNT} documents${RESET}"
 
 echo "[9/11] Verifying synthetic search load data streams in the main cluster"
 SEARCH_LOAD_READY=0
