@@ -185,6 +185,11 @@ if monitoring_mode_agent; then
   kubectl -n lab-monitoring delete cronjob edot-autoops-tsds-deriver --ignore-not-found
   sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-metrics-agent.yaml | kubectl apply -f -
   sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-logs-agent.yaml | kubectl apply -f -
+elif monitoring_mode_contrib; then
+  kubectl apply -f manifests/edot/gateway.yaml
+  kubectl apply -f manifests/edot/main-logs.yaml
+  sed "s|__OTEL_CONTRIB_COLLECTOR_VERSION__|${OTEL_CONTRIB_COLLECTOR_VERSION}|g" manifests/edot/main-metrics-contrib.yaml | kubectl apply -f -
+  kubectl -n lab-monitoring delete cronjob edot-autoops-tsds-deriver --ignore-not-found
 else
   kubectl apply -f manifests/edot/gateway.yaml
   kubectl apply -f manifests/edot/main-logs.yaml
@@ -202,7 +207,7 @@ kubectl -n lab-main rollout status deploy/edot-main-metrics --timeout=300s
 kubectl -n lab-main rollout status ds/edot-main-logs --timeout=300s
 kubectl -n lab-main rollout status deploy/main-search-load --timeout=300s
 
-if monitoring_mode_autoops; then
+if monitoring_mode_autoops || monitoring_mode_contrib; then
   kubectl -n lab-monitoring rollout status deploy/edot-gateway --timeout=300s
 fi
 

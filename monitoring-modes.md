@@ -8,7 +8,7 @@ make up EDOT_MONITORING_MODE=agent
 make up EDOT_MONITORING_MODE=contrib
 ```
 
-`contrib` is still accepted, but it now resolves to the same runtime behavior as `agent`.
+All three modes are supported and deploy different collection paths.
 
 ## At A Glance
 
@@ -16,7 +16,7 @@ make up EDOT_MONITORING_MODE=contrib
 |---|---|---|---|---|---|
 | `autoops` | EDOT Collector + gateway + deriver | `metrics-elasticsearch.autoops-main` | `logs-elasticsearch.metrics-main` and `logs-elasticsearch.logs.otel-main` | Yes | Preserve raw `autoops_es` and derive a curated TSDS |
 | `agent` | Elastic Agent with EDOT runtime | `metrics-elasticsearch.stack_monitoring.*-main` | `logs-elasticsearch.server-main` | No | Direct Elastic-supported stack-monitoring path |
-| `contrib` | Compatibility alias to `agent` | same as `agent` | same as `agent` | No | Older automation still using `contrib` |
+| `contrib` | Collector Contrib receiver + gateway | `metrics-elasticsearch.stack_monitoring.otel-main` | `logs-elasticsearch.logs.otel-main` | No | Upstream Elasticsearch receiver path for comparison and direct stack-monitoring-style output |
 
 ## Deploy Commands
 
@@ -253,43 +253,109 @@ Notable impact:
 
 ## 3. `contrib`
 
-Deploy:
+Primary manifests:
 
-```bash
-make up EDOT_MONITORING_MODE=contrib
+- [manifests/edot/main-metrics-contrib.yaml](manifests/edot/main-metrics-contrib.yaml)
+- [manifests/edot/main-logs.yaml](manifests/edot/main-logs.yaml)
+- [manifests/edot/gateway.yaml](manifests/edot/gateway.yaml)
+
+### Runtime flow
+
+1. The upstream OpenTelemetry Collector Contrib receiver scrapes Elasticsearch directly.
+2. Metrics are emitted through the EDOT collector pipeline.
+3. The monitoring gateway receives OTLP and writes to the monitoring cluster.
+4. Metrics land in `metrics-elasticsearch.stack_monitoring.otel-main`.
+5. Logs still land in `logs-elasticsearch.logs.otel-main`.
+6. Dashboards read the contrib-specific metrics stream directly.
+
+### Key Kubernetes config
+
+The manifest distinction is the receiver and output shape:
+
+```yaml
+receivers:
+  elasticsearch:
+    collection_interval: 10s
+    endpoint: ${env:MAIN_ELASTICSEARCH_URL}
+    username: ${env:MAIN_ELASTICSEARCH_USERNAME}
+    password: ${env:MAIN_ELASTICSEARCH_PASSWORD}
+    nodes: ["_all"]
+    indices: ["_all"]
+
+service:
+  pipelines:
+    metrics:
+      receivers: [elasticsearch]
+      processors: [memory_limiter, resource/route, batch]
+      exporters: [otlp_grpc/gateway]
 ```
 
-### Current behavior
+The contrib path still uses the shared monitoring gateway:
 
-- This no longer deploys the old upstream `elasticsearchreceiver` path.
-- It resolves to the same runtime behavior as `EDOT_MONITORING_MODE=agent`.
-- It exists only so older automation and shell history do not break.
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
 
-### Practical distinction
+exporters:
+  elasticsearch/monitoring:
+    endpoints:
+      - ${env:MONITORING_ELASTICSEARCH_URL}
+    mapping:
+      mode: otel
 
-There is no manifest distinction anymore.
-
-`contrib` now means:
-
-```text
-contrib -> agent
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      exporters: [elasticsearch/monitoring]
+    metrics:
+      receivers: [otlp]
+      exporters: [elasticsearch/monitoring]
 ```
+
+### Why use it
+
+- Restores the historical contrib-based collection path.
+- Keeps an alternative collector implementation in the lab for comparison.
+- Produces a direct stack-monitoring-style metrics stream without the `autoops` derivation layer.
 
 ### To ship to another OTEL endpoint
 
-Use the same considerations as `agent`, because the runtime path is the same.
+This mode is OTLP-forwarding already, so the main change is the gateway exporter:
+
+1. change the exporter in [manifests/edot/main-metrics-contrib.yaml](manifests/edot/main-metrics-contrib.yaml)
+2. optionally replace or remove the monitoring-side [manifests/edot/gateway.yaml](manifests/edot/gateway.yaml)
+3. keep the dashboard and stream naming in sync with the downstream endpoint
+
+Typical change:
+
+```yaml
+exporters:
+  otlp_grpc/external:
+    endpoint: other-otel-gateway.example:4317
+    tls:
+      insecure: false
+
+service:
+  pipelines:
+    metrics:
+      exporters: [otlp_grpc/external]
+```
 
 ## Configuration Summary
 
-| Area | `autoops` | `agent` |
-|---|---|---|
-| Runtime shape | EDOT Collector + gateway + deriver | Elastic Agent + EDOT runtime |
-| Primary config object | collector `config.yaml` | Agent `agent.yml` |
-| Metrics source | `autoops_es` | Elasticsearch integration |
-| First landing format | logs-shaped source docs | stack-monitoring metrics streams |
-| Gateway required | yes | no |
-| Deriver required | yes | no |
-| External OTEL forwarding effort | lower | higher |
+| Area | `autoops` | `agent` | `contrib` |
+|---|---|---|---|
+| Runtime shape | EDOT Collector + gateway + deriver | Elastic Agent + EDOT runtime | Collector Contrib receiver + gateway |
+| Primary config object | collector `config.yaml` | Agent `agent.yml` | collector `config.yaml` |
+| Metrics source | `autoops_es` | Elasticsearch integration | upstream Elasticsearch receiver |
+| First landing format | logs-shaped source docs | stack-monitoring metrics streams | metrics stream via OTLP gateway |
+| Gateway required | yes | no | yes |
+| Deriver required | yes | no | no |
+| External OTEL forwarding effort | lower | higher | lower |
 
 ## Notable Changes When Switching Destination
 
@@ -304,4 +370,6 @@ If the target is no longer the monitoring Elasticsearch cluster:
   - current stack-monitoring stream contract will not hold automatically
   - dashboards will need a replacement storage/query path
 - `contrib`
-  - same changes as `agent`
+  - gateway exporter is the first change point
+  - the collector receiver remains the upstream Elasticsearch receiver path
+  - dashboards will need the contrib metrics stream or a replacement sink

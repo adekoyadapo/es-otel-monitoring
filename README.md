@@ -1,6 +1,6 @@
 # es-otel-monitoring
 
-This repository provisions a local `k3d` lab with two Elasticsearch clusters managed by ECK and two Elasticsearch monitoring paths:
+This repository provisions a local `k3d` lab with two Elasticsearch clusters managed by ECK and three Elasticsearch monitoring paths:
 
 - `autoops`
   - EDOT `autoops_es` collection
@@ -11,12 +11,23 @@ This repository provisions a local `k3d` lab with two Elasticsearch clusters man
   - Elasticsearch Stack Monitoring metrics collected through Elastic Agent inputs
   - Elasticsearch logs collected through Elastic Agent `filestream`
   - metrics shipped directly to stack-monitoring data streams in the monitoring cluster
+- `contrib`
+  - upstream OpenTelemetry Collector Contrib receiver path
+  - Elasticsearch metrics collected through the contrib receiver
+  - Elasticsearch logs collected through the shared logs path
+  - metrics shipped to the direct stack-monitoring-style contrib data stream
 
 The lab also deploys a synthetic workload so the dashboards show index and search activity immediately after deployment.
 
 ## Why This Repo Uses Elastic Agent EDOT Runtime
 
 The goal of the `agent` path is not generic OpenTelemetry scraping of Elasticsearch. The goal is Elastic-supported collection of Elasticsearch monitoring metrics and logs with Elastic Agent and the EDOT runtime.
+
+The repo keeps all three paths intentionally:
+
+- `autoops` for raw `autoops_es` collection plus derivation
+- `agent` for the supported Elastic Agent stack-monitoring path
+- `contrib` for the upstream collector-contrib comparison path
 
 That distinction matters:
 
@@ -25,7 +36,7 @@ That distinction matters:
 - Elasticsearch Stack Monitoring metrics are expected to land in Elastic monitoring data streams such as `metrics-elasticsearch.stack_monitoring.*-main`.
 - The upstream OpenTelemetry Collector Contrib `elasticsearchreceiver` is not part of the supported EDOT component set for this use case.
 
-The old `contrib` path in this repo used the upstream `elasticsearchreceiver`. That manifest has been removed and replaced by the `agent` path.
+The `contrib` path in this repo uses the upstream `elasticsearchreceiver` and is kept as a separate third option for direct comparison with the Agent path.
 
 Official references used for this change:
 
@@ -132,12 +143,11 @@ Benefits:
 Tradeoffs:
 
 - only the fields exposed by the Elastic Agent Elasticsearch integration are available
-- if you switch from the old contrib path on a reused lab, legacy `metrics-elasticsearch.stack_monitoring.otel-main` data can remain until manually cleaned up
+- if you reuse a lab after running `contrib`, legacy `metrics-elasticsearch.stack_monitoring.otel-main` data can remain until manually cleaned up
 
 Compatibility note:
 
-- `EDOT_MONITORING_MODE=contrib` is still accepted as a backward-compatible alias in scripts
-- it now resolves to the `agent` path
+- `EDOT_MONITORING_MODE=contrib` is a supported third option and uses the collector-contrib path
 
 ## Repository Layout
 
@@ -168,10 +178,16 @@ Compatibility note:
   - Elastic Agent dashboard set
 - [dashboards/elasticsearch-otel-monitoring-agent.export.json](dashboards/elasticsearch-otel-monitoring-agent.export.json)
   - structured wrapper for the Elastic Agent dashboard objects
+- [dashboards/elasticsearch-otel-monitoring-contrib.ndjson](dashboards/elasticsearch-otel-monitoring-contrib.ndjson)
+  - upstream contrib dashboard set
+- [dashboards/elasticsearch-otel-monitoring-contrib.export.json](dashboards/elasticsearch-otel-monitoring-contrib.export.json)
+  - structured wrapper for the contrib dashboard objects
 - [scripts/build_otel_dashboard_ndjson.py](scripts/build_otel_dashboard_ndjson.py)
   - regenerates the autoops dashboards
 - [scripts/build_otel_agent_dashboard_ndjson.py](scripts/build_otel_agent_dashboard_ndjson.py)
   - regenerates the Elastic Agent dashboards
+- [scripts/build_otel_contrib_dashboard_ndjson.py](scripts/build_otel_contrib_dashboard_ndjson.py)
+  - regenerates the contrib dashboards
 - [scripts/import_monitoring_dashboard.sh](scripts/import_monitoring_dashboard.sh)
   - imports the dashboard set for the selected mode
 
@@ -253,6 +269,14 @@ Generated users and required permissions:
 6. logs land in `logs-elasticsearch.server-main`.
 7. dashboards read the stack-monitoring metrics streams directly.
 
+### Contrib mode
+
+1. the contrib receiver scrapes Elasticsearch directly.
+2. metrics are written through the shared OTLP gateway path.
+3. logs continue to land in `logs-elasticsearch.logs.otel-main`.
+4. metrics land in `metrics-elasticsearch.stack_monitoring.otel-main`.
+5. dashboards read the contrib metrics stream directly.
+
 ## Synthetic Workload
 
 The synthetic workload exists so the dashboards show read and write activity without manual traffic generation.
@@ -289,6 +313,7 @@ Examples:
 ```bash
 make up EDOT_MONITORING_MODE=autoops
 make up EDOT_MONITORING_MODE=agent
+make up EDOT_MONITORING_MODE=contrib
 make up ES_VERSION=9.3.3 EDOT_MONITORING_MODE=agent
 make search-load-up SEARCH_LOAD_NUMBER_OF_SHARDS=2 SEARCH_LOAD_NUMBER_OF_REPLICAS=1
 ```
@@ -307,11 +332,19 @@ make search-load-up SEARCH_LOAD_NUMBER_OF_SHARDS=2 SEARCH_LOAD_NUMBER_OF_REPLICA
 8. deploy the synthetic workload
 9. import the dashboard set for the selected mode when the stack version supports it
 
-Agent mode specifics:
+Mode-specific behavior:
 
-- the old upstream `elasticsearchreceiver` manifest is no longer deployed
-- the monitoring gateway is deleted if it exists from an earlier mode
-- metrics and logs ship directly from `lab-main` to the monitoring cluster
+- `autoops`
+  - deploys the EDOT collector, gateway, and deriver
+  - keeps the raw source stream and derived TSDS
+- `agent`
+  - deploys Elastic Agent metrics and logs manifests
+  - deletes the gateway and deriver from earlier modes
+  - ships directly to stack-monitoring data streams
+- `contrib`
+  - deploys the restored contrib receiver manifest and the shared gateway
+  - keeps the direct contrib metrics stream
+  - does not use the autoops deriver
 
 ## Validation
 
@@ -370,32 +403,22 @@ kubectl -n lab-main logs ds/edot-main-logs --tail=200
 kubectl -n lab-monitoring get pods
 ```
 
-## Migration Note
+## Mode Comparison
 
-Migration from the old upstream `elasticsearchreceiver` path to Elastic Agent EDOT runtime:
+The three modes differ by where collection starts and where the first durable data lands:
 
-- removed:
-  - `manifests/edot/main-metrics-contrib.yaml`
-  - `scripts/build_otel_contrib_dashboard_ndjson.py`
-  - contrib dashboard exports
-- added:
-  - standalone Elastic Agent metrics manifest
-  - standalone Elastic Agent logs manifest
-  - new Elastic Agent dashboard set
-- changed:
-  - `EDOT_MONITORING_MODE=agent` is now the supported replacement for the old contrib mode
-  - `EDOT_MONITORING_MODE=contrib` remains as a compatibility alias
-
-Behavioral change:
-
-- old contrib path:
-  - upstream OTel Contrib `elasticsearchreceiver`
-  - OTel-native metrics stream `metrics-elasticsearch.stack_monitoring.otel-main`
-- new agent path:
-  - standalone Elastic Agent
-  - EDOT runtime
-  - Elastic Agent `elasticsearch/metrics` input
-  - stack-monitoring metrics streams under `metrics-elasticsearch.stack_monitoring.*-main`
+- `autoops`
+  - upstream `autoops_es` payload
+  - raw documents land in a logs-shaped source stream
+  - a deriver turns the source into a curated TSDS
+- `agent`
+  - Elastic Agent with EDOT runtime
+  - Elasticsearch integration metrics and `filestream` logs
+  - data lands directly in Elastic monitoring data streams
+- `contrib`
+  - upstream OpenTelemetry Collector Contrib Elasticsearch receiver
+  - metrics are forwarded through the shared gateway
+  - direct contrib metrics stream stays separate from the Agent stream
 
 ## Presentation
 
@@ -407,9 +430,10 @@ It now needs to be read as:
 
 - `autoops` for raw-source-plus-derivation
 - `agent` for Elastic Agent EDOT runtime collection
+- `contrib` for the upstream collector-contrib comparison path
 
 ## Notes
 
-- `EDOT_MONITORING_MODE=agent` is the preferred supported path.
 - `EDOT_MONITORING_MODE=autoops` remains useful when the raw `autoops_es` payload is required.
-- The old contrib mode is deprecated and only kept as a script alias for compatibility.
+- `EDOT_MONITORING_MODE=agent` is the Elastic-supported Stack Monitoring path.
+- `EDOT_MONITORING_MODE=contrib` remains available as the upstream collector-contrib comparison path.

@@ -71,7 +71,7 @@ help:
 	@echo "  MONITORING_ES_NODES=<n>   Monitoring Elasticsearch node count"
 	@echo "  MONITORING_ES_CPU=<cpu>   Monitoring Elasticsearch CPU request"
 	@echo "  MONITORING_ES_MEMORY=<m>  Monitoring Elasticsearch memory request and limit"
-	@echo "  EDOT_MONITORING_MODE=<m>  Monitoring path: autoops or agent"
+	@echo "  EDOT_MONITORING_MODE=<m>  Monitoring path: autoops, agent, or contrib"
 	@echo "  ELASTIC_AGENT_VERSION=<v> Elastic Agent version for agent mode"
 	@echo "  SEARCH_LOAD_STREAM_COUNT=<n>         Number of synthetic data streams"
 	@echo "  SEARCH_LOAD_WRITE_BATCH_SIZE=<n>     Bulk write size per cycle"
@@ -90,6 +90,7 @@ up:
 	@./scripts/install_eck.sh
 	@./scripts/deploy_elastic.sh
 	@./scripts/wait_ready.sh
+	@./scripts/deploy_edot.sh
 	@echo ""
 	@echo "Environment ready"
 	@echo "Main Kibana:        https://kibana-main.$${HOST_IP}.sslip.io"
