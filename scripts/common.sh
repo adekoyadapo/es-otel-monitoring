@@ -14,6 +14,14 @@
 : "${EDOT_MONITORING_MODE:=autoops}"
 : "${OTEL_CONTRIB_COLLECTOR_VERSION:=0.148.0}"
 : "${ELASTIC_AGENT_VERSION:=${ES_VERSION}}"
+: "${JWT_TEST_REALM_NAME:=jwt1}"
+: "${JWT_TEST_ISSUER:=edot-jwt-test}"
+: "${JWT_TEST_AUDIENCE:=edot-jwt-test}"
+: "${JWT_TEST_PRINCIPAL:=edot-jwt-monitor}"
+: "${JWT_TEST_ROLE_NAME:=edot_jwt_monitor}"
+: "${JWT_TEST_ROLE_MAPPING_NAME:=edot_jwt_monitor_mapping}"
+: "${JWT_TEST_KEY_ID:=edot-jwt-hs256}"
+: "${JWT_TEST_SECRET_NAME:=elasticsearch-main-jwt-secure-settings}"
 
 AUTOOPS_DASHBOARD_ID="otel-elasticsearch-monitoring-main"
 AUTOOPS_DASHBOARD_PATH="dashboards/elasticsearch-otel-monitoring-main.ndjson"
@@ -116,6 +124,14 @@ export DASHBOARD_IMPORT_MIN_VERSION
 export EDOT_MONITORING_MODE
 export OTEL_CONTRIB_COLLECTOR_VERSION
 export ELASTIC_AGENT_VERSION
+export JWT_TEST_REALM_NAME
+export JWT_TEST_ISSUER
+export JWT_TEST_AUDIENCE
+export JWT_TEST_PRINCIPAL
+export JWT_TEST_ROLE_NAME
+export JWT_TEST_ROLE_MAPPING_NAME
+export JWT_TEST_KEY_ID
+export JWT_TEST_SECRET_NAME
 export AUTOOPS_DASHBOARD_ID
 export AUTOOPS_DASHBOARD_PATH
 export AGENT_DASHBOARD_ID

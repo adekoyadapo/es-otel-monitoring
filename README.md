@@ -161,6 +161,8 @@ Compatibility note:
   - GitHub Pages presentation
 - `monitoring-modes.md`
   - deployment commands and flow comparison for `autoops`, `agent`, and `contrib`
+- `agent-otel-jwt.md`
+  - JWT-based source-cluster auth pattern for Agent + EDOT gateway deployments
 - `scripts`
   - deployment, verification, dashboard generation, and helper scripts
 - `images`
@@ -437,3 +439,14 @@ It now needs to be read as:
 - `EDOT_MONITORING_MODE=autoops` remains useful when the raw `autoops_es` payload is required.
 - `EDOT_MONITORING_MODE=agent` is the Elastic-supported Stack Monitoring path.
 - `EDOT_MONITORING_MODE=contrib` remains available as the upstream collector-contrib comparison path.
+- JWT-based source-cluster auth is documented in [agent-otel-jwt.md](agent-otel-jwt.md).
+- JWT test overlay commands:
+  - `make jwt-test-up`
+    - applies a temporary JWT realm overlay to `elasticsearch-main`
+    - creates the role and role mapping needed for a signed test token
+  - `make jwt-test`
+    - mints a JWT and validates it against `/_security/_authenticate`
+    - verifies a JWT-authenticated cluster health call
+  - `make jwt-test-down`
+    - removes the overlay and deletes the JWT-specific role, role mapping, and secret
+- JWT realms are not enabled on the repository's current basic license. The test harness will fail fast until you run the lab with a trial or commercial license that permits JWT realms.

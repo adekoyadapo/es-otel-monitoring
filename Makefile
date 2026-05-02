@@ -45,7 +45,7 @@ export SEARCH_LOAD_NUMBER_OF_REPLICAS
 export SEARCH_LOAD_QUERY_SIZE
 export SEARCH_LOAD_DEPLOYMENT_REPLICAS
 
-.PHONY: help up down reset status logs test import-dashboard search-load-up search-load-down search-load-reset
+.PHONY: help up down reset status logs test import-dashboard search-load-up search-load-down search-load-reset jwt-test-up jwt-test jwt-test-down
 
 help:
 	@echo "Targets:"
@@ -55,6 +55,9 @@ help:
 	@echo "  make search-load-up    Deploy or update the synthetic search workload"
 	@echo "  make search-load-down  Stop the synthetic search workload and delete its data streams"
 	@echo "  make search-load-reset Delete the synthetic workload data streams and template"
+	@echo "  make jwt-test-up       Install the JWT overlay and supporting role mapping"
+	@echo "  make jwt-test          Validate JWT auth against the source cluster"
+	@echo "  make jwt-test-down     Remove the JWT overlay and supporting JWT resources"
 	@echo "  make status  Show cluster nodes, pods, ingresses, and certificates"
 	@echo "  make logs    Show useful workload logs for the lab"
 	@echo "  make down    Delete the local k3d lab"
@@ -73,6 +76,8 @@ help:
 	@echo "  MONITORING_ES_MEMORY=<m>  Monitoring Elasticsearch memory request and limit"
 	@echo "  EDOT_MONITORING_MODE=<m>  Monitoring path: autoops, agent, or contrib"
 	@echo "  ELASTIC_AGENT_VERSION=<v> Elastic Agent version for agent mode"
+	@echo "  JWT_TEST_REALM_NAME=<n>    JWT realm name for the test overlay"
+	@echo "  JWT_TEST_PRINCIPAL=<n>     JWT principal used in the test token"
 	@echo "  SEARCH_LOAD_STREAM_COUNT=<n>         Number of synthetic data streams"
 	@echo "  SEARCH_LOAD_WRITE_BATCH_SIZE=<n>     Bulk write size per cycle"
 	@echo "  SEARCH_LOAD_SEARCHES_PER_CYCLE=<n>   Searches per workload cycle"
@@ -139,3 +144,12 @@ search-load-down:
 
 search-load-reset:
 	@bash ./scripts/reset_search_load_data.sh
+
+jwt-test-up:
+	@bash ./scripts/deploy_jwt_test.sh
+
+jwt-test:
+	@bash ./scripts/test_jwt_auth.sh
+
+jwt-test-down:
+	@bash ./scripts/cleanup_jwt_test.sh
