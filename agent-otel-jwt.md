@@ -1,177 +1,177 @@
-# Agent JWT Monitoring Pattern
+# JWT-authenticated OTLP setup
 
-This document describes the JWT-authenticated monitoring pattern for Elasticsearch when using Elastic Agent as the EDOT runtime and an EDOT gateway as the forwarder to the monitoring cluster.
+This document describes the isolated JWT-authenticated Elastic Agent workflow in this repository.
+It focuses on the Kubernetes configuration, how the JWT authentication works, how metrics and logs
+move through the EDOT gateway, and which fields the native metrics exporter exposes.
 
-## What Is Supported
+## Overview
 
-Elastic Agent 9.2+ embeds the EDOT Collector runtime and can collect Elasticsearch monitoring data through the Elasticsearch integration. The supported collection path for Elasticsearch monitoring remains:
+The JWT path keeps Elastic Agent runtime containers in the pod, but it does not use a
+scrape-based collector model.
 
-1. Elastic Agent runs on or near the Elasticsearch source cluster.
-2. The `elasticsearch/metrics` integration collects Stack Monitoring data.
-3. The `filestream` input collects Elasticsearch server logs.
-4. The Agent forwards data to the EDOT gateway or directly to Elasticsearch, depending on the mode.
-5. The EDOT gateway writes to the monitoring Elasticsearch cluster.
+The flow is:
 
-Relevant Elastic docs:
+1. a JWT is minted into a shared volume
+2. a local proxy injects the JWT and the required shared-secret header
+3. a small exporter queries Elasticsearch through that proxy
+4. the exporter emits native OTLP metrics to the local EDOT collector
+5. the collector forwards those metrics to `edot-gateway`
+6. the gateway writes the metrics to Elasticsearch as an OTLP-native metrics stream
+7. logs follow a separate `filelog` path and are shipped through the same gateway
 
-- [Elastic Agent as an OpenTelemetry Collector](https://www.elastic.co/docs/reference/fleet/elastic-agent-as-otel-collector)
-- [Collecting monitoring data with Elastic Agent](https://www.elastic.co/guide/en/elasticsearch/reference/current/configuring-elastic-agent.html)
-- [Configuring monitoring data streams created by Elastic Agent](https://www.elastic.co/guide/en/elasticsearch/reference/current/config-monitoring-data-streams-elastic-agent.html)
+## Kubernetes Configuration
 
-## JWT Reality Check
+### JWT realm overlay
 
-Elasticsearch can trust JWT bearer tokens through a JWT realm.
+File:
 
-The important constraint is that the current Elastic Agent Elasticsearch output and Elasticsearch monitoring integration do not expose JWT as a first-class source-cluster authentication method. Elastic Agent output authentication is documented for:
+- `manifests/jwt/elasticsearch-main-jwt.yaml`
 
-- basic auth
-- API key auth
-- PKI certificates
-- Kerberos
+Key sections:
 
-That means JWT is not the direct auth method inside the stock `elasticsearch/metrics` input path in this repo.
+- `xpack.security.authc.realms.jwt.jwt1`
+- `client_authentication.type: shared_secret`
+- `allowed_signature_algorithms: [HS256]`
+- `allowed_issuer`
+- `allowed_audiences`
+- `allowed_subjects`
+- `hmac_jwkset`
 
-There is a second constraint in this lab: the JWT realm itself is not enabled on the current basic license. When the overlay is applied on a basic-license cluster, Elasticsearch starts but auto-disables the JWT realm and rejects JWT requests. To validate this flow end to end you need a trial or commercial license that permits JWT realms.
+This realm validates the JWT signature and the shared-secret client authentication header
+before allowing the source cluster request.
 
-Relevant docs:
+The repo now applies an ECK trial-license secret in `elastic-system` before the
+clusters are created, so a fresh install can enable JWT realms without a manual
+license step after the fact.
 
-- [JWT authentication in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/current/jwt-auth-realm.html)
-- [Elastic Agent Elasticsearch output authentication](https://www.elastic.co/docs/reference/fleet/elasticsearch-output)
-- [EDOT Collector authentication methods](https://www.elastic.co/docs/reference/edot-collector/config/authentication-methods)
+JWT realms require a trial or commercial license on the source cluster. A basic license
+will reject the JWT-authenticated requests and the exporter will report 401 responses.
 
-## Recommended JWT Flow
+### JWT metrics exporter
 
-Use JWT as the authentication boundary at the source cluster, then terminate or exchange the token before the collector talks to Elasticsearch.
+File:
 
-Recommended flow:
+- `manifests/edot/main-metrics-otel-jwt.yaml`
 
-1. A client or auth proxy obtains a JWT from your identity provider.
-2. Elasticsearch trusts that JWT through a configured JWT realm.
-3. A small auth shim or proxy exchanges or validates the JWT and calls Elasticsearch on behalf of the monitoring integration.
-4. Elastic Agent still performs the Elasticsearch metrics collection using its supported Elasticsearch integration settings.
-5. Elastic Agent exports to the EDOT gateway.
-6. The gateway writes to the monitoring cluster.
+Relevant sections:
 
-This keeps JWT as the identity layer while preserving the Elastic-supported monitoring transport path.
+- `jwt-metrics-exporter`
+  - Python sidecar that polls Elasticsearch through the local proxy
+  - reads `/jwt/token`
+  - injects `Authorization: Bearer ...`
+  - injects `ES-Client-Authentication: SharedSecret ...`
+  - emits OTLP metric points to the local collector on `127.0.0.1:4318`
+- `edot-main-metrics-jwt-config`
+  - `receivers.otlp`
+  - `data_stream.type: metrics`
+  - `data_stream.dataset: elasticsearch.stack_monitoring`
+  - `data_stream.namespace: main`
+  - `exporters.otlp_grpc/gateway`
 
-## Example Kubernetes Shape
+This is the piece that keeps the JWT path native OTLP instead of a scrape-to-log workaround.
 
-The JWT path is best treated as a separate configuration overlay rather than a new default mode.
+### JWT logs collector
 
-This repo now includes a temporary test harness for that overlay:
+File:
 
-```bash
-make jwt-test-up
-make jwt-test
-make jwt-test-down
-```
+- `manifests/edot/main-logs-otel-jwt.yaml`
 
-Those commands:
+Relevant sections:
 
-- apply a JWT realm overlay to `elasticsearch-main`
-- create the matching role and role mapping for a signed test principal
-- mint and validate a JWT against the source cluster
-- remove the JWT-specific resources again during cleanup
+- `filelog/elasticsearch`
+  - tails the Elasticsearch container logs
+- `attributes/edot_logs`
+- `exporters.otlp_grpc/gateway`
 
-The scripts intentionally fail fast if the source cluster reports a basic license, because the JWT realm is automatically disabled there.
+Logs and metrics are shipped independently, but they share the same EDOT gateway target.
 
-Source cluster JWT realm example:
+## Authentication Flow
 
-```yaml
-xpack.security.authc.realms.jwt.jwt1:
-  order: 3
-  token_type: access_token
-  client_authentication.type: shared_secret
-  allowed_issuer: "https://idp.example.com/jwt/"
-  allowed_audiences: ["es-monitoring"]
-  allowed_signature_algorithms: [RS256]
-  pkc_jwkset_path: jwt/jwkset.json
-  claims.principal: sub
-```
+1. The `mint-jwt` init container creates a signed JWT and stores it at `/jwt/token`.
+2. The `jwt-source-proxy` sidecar reads that token and forwards requests to the source cluster.
+3. The proxy injects:
+   - `Authorization: Bearer <token>`
+   - `ES-Client-Authentication: SharedSecret <secret>`
+4. The source Elasticsearch JWT realm validates the request.
+5. The exporter queries Elasticsearch through the proxy and turns the responses into OTLP metrics.
+6. The Elastic Agent EDOT runtime receives those OTLP points on `127.0.0.1:4318`.
+7. The EDOT gateway stores the metrics in the monitoring cluster as a metrics data stream.
 
-Agent collection example:
+## Data Shape
 
-```yaml
-inputs:
-  - id: elasticsearch-stack-monitoring
-    type: elasticsearch/metrics
-    use_output: default
-    data_stream.namespace: main
-    streams:
-      - metricsets: ["cluster_stats"]
-        data_stream.dataset: elasticsearch.stack_monitoring.cluster_stats
-        period: 60s
-        hosts: ["${MAIN_ELASTICSEARCH_URL}"]
-        ssl.certificate_authorities: ["/etc/elastic-agent/certs/ca.crt"]
-```
+The exporter emits OTLP-native metrics, not logs documents.
 
-Gateway export example:
+The main metric families are:
 
-```yaml
-exporters:
-  elasticsearch/monitoring:
-    endpoint: ${env:MONITORING_ELASTICSEARCH_URL}
-    api_key: ${env:MONITORING_ELASTICSEARCH_API_KEY}
-    mapping:
-      mode: otel
-```
+- `elasticsearch_cluster_health_state`
+- `elasticsearch_cluster_nodes_total`
+- `elasticsearch_cluster_nodes_data`
+- `elasticsearch_cluster_indices_total`
+- `elasticsearch_cluster_shards_total`
+- `elasticsearch_cluster_shards_primaries`
+- `elasticsearch_cluster_docs_total`
+- `elasticsearch_cluster_store_size_bytes`
+- `elasticsearch_cluster_pending_tasks_total`
+- `elasticsearch_node_heap_used_bytes`
+- `elasticsearch_node_heap_max_bytes`
+- `elasticsearch_node_heap_used_pct`
+- `elasticsearch_node_cpu_pct`
+- `elasticsearch_node_open_file_descriptors`
+- `elasticsearch_node_search_queue`
+- `elasticsearch_node_write_queue`
+- `elasticsearch_node_search_rejected_total`
+- `elasticsearch_node_write_rejected_total`
+- `elasticsearch_node_young_gc_time_ms`
+- `elasticsearch_node_old_gc_time_ms`
+- `elasticsearch_node_search_total`
+- `elasticsearch_node_indexing_total`
+- `elasticsearch_node_store_size_bytes`
+- `elasticsearch_node_segments_count`
+- `elasticsearch_node_request_breakers_total`
+- `elasticsearch_node_parent_breakers_total`
+- `elasticsearch_node_ingest_failures_total`
+- `elasticsearch_index_docs`
+- `elasticsearch_index_store_size_bytes`
+- `elasticsearch_index_segments_count`
+- `elasticsearch_index_search_query_total`
+- `elasticsearch_index_indexing_total`
+- `elasticsearch_index_primary_shards`
+- `elasticsearch_index_total_shards`
 
-For Kubernetes, keep the API key in a Secret and mount it as an environment variable or file. Do not hardcode it in the manifest.
+Common dimensions:
 
-The live test harness in this repo uses a JWT realm overlay on the source cluster, but the supported Agent collection path still uses the Elastic Agent integration and ships onward using the configured Elasticsearch output or EDOT gateway transport.
+- `cluster_name`
+- `node_name`
+- `node_id`
+- `index_name`
+- `status`
+- `state`
 
-## Scaling Guidance
+Those labels are what make the dashboards filterable and multi-cluster friendly.
 
-These recommendations are based on how Elasticsearch collectors behave and on Elastic's monitoring guidance. They are practical defaults, not a hard requirement.
+## Sampling And Collection Rate
 
-- Use `scope: cluster` unless you explicitly need per-node collection.
-- Keep one Agent per source cluster for normal deployments.
-- Use separate `data_stream.namespace` values when you monitor multiple clusters so the streams do not collide.
-- Prefer a 60s interval for `cluster_stats`.
-- Use 30s to 60s for `node_stats` and `index` on medium clusters.
-- Use 60s for `shard` and `index_recovery` when shard counts are high.
-- Keep 10s intervals for small labs or short troubleshooting sessions only.
-- If you switch to `scope: node`, remember that every Elasticsearch node needs an Agent and the elected master does more work.
+The main control is the exporter poll interval.
 
-Elastic docs note that the collection work is serialized and that collector failures can show up when the elected master is overloaded or the cluster has many indices or shards. That is the main reason to slow the interval down as the cluster grows.
+Current default:
 
-Relevant docs:
+- exporter poll interval: `10s`
 
-- [Collectors](https://www.elastic.co/guide/en/elasticsearch/reference/current/es-monitoring-collectors.html/)
-- [Collecting monitoring data with Elastic Agent](https://www.elastic.co/guide/en/elasticsearch/reference/current/configuring-elastic-agent.html)
-- [Scale Elastic Agent on Kubernetes](https://www.elastic.co/guide/en/fleet/current/scaling-on-kubernetes.html)
+Practical guidance:
 
-## Source Cluster Load
+- `10s` is a good default for lab-scale Elasticsearch clusters.
+- `5s` gives faster visibility but increases source-cluster cost and monitoring churn.
+- `30s` or `1m` reduces source load if you only need coarse trends.
 
-The highest-cost collectors are the ones that fan out across indices or shards:
+If you need to adjust the sampling size, change the exporter `POLL_INTERVAL`
+environment variable in `manifests/edot/main-metrics-otel-jwt.yaml`.
 
-- `cluster_stats` is generally the lightest.
-- `node_stats` adds JVM, GC, file descriptors, and thread-pool detail.
-- `index` and `shard` scale with cluster cardinality.
-- `index_recovery` is useful but should stay at a lower rate unless you are actively troubleshooting recovery.
+## What To Change For Other Endpoints
 
-Best-practice starting point:
+If you need to ship the same native metrics to a different OTLP endpoint:
 
-- `cluster_stats`: `60s`
-- `node_stats`: `30s` or `60s`
-- `index`: `60s`
-- `shard`: `60s`
-- `index_recovery`: `60s`
+- change the collector exporter endpoint in `manifests/edot/main-metrics-otel-jwt.yaml`
+- keep the JWT realm overlay and local proxy unchanged
+- keep the exporter metric names stable so the dashboard stays valid
 
-If the cluster is small, you can tighten these to `10s` for lab work. If the cluster is large, move them up before you scale out another collector.
-
-## Multiple Elasticsearch Sources
-
-This repo does not implement multi-source fan-in, but the operating model is straightforward:
-
-- one Agent policy per source cluster, or
-- one Agent deployment per source cluster, or
-- one input block per source cluster with a distinct namespace
-
-Keep the namespaces separate and avoid sharing the same stream names across clusters. That keeps dashboards simple and prevents collisions in the monitoring cluster.
-
-## Summary
-
-JWT is a valid Elasticsearch authentication mechanism.
-
-In this repo, the supported place to use it is at the source-cluster boundary, before the Agent's Elasticsearch monitoring integration reaches Elasticsearch. The Agent still ships data to the EDOT gateway and the monitoring cluster using the supported Elastic transport path.
+If you change the metric names or dimensions, the JWT dashboard must be rebuilt to match the new field set.

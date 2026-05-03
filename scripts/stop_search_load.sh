@@ -2,4 +2,5 @@
 set -euo pipefail
 
 kubectl -n lab-main delete deploy/main-search-load --ignore-not-found
+kubectl -n lab-main delete configmap main-search-load-script --ignore-not-found
 bash "$(dirname "$0")/reset_search_load_data.sh"

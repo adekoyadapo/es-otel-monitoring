@@ -23,9 +23,9 @@ for _ in $(seq 1 30); do
 done
 
 MAIN_ES_URL="https://127.0.0.1:19201"
-LICENSE_TYPE="$(curl -sk -u "elastic:${MAIN_ELASTIC_PASSWORD}" "${MAIN_ES_URL}/_license" | sed -n 's/.*"type":"\([^"]*\)".*/\1/p')"
+LICENSE_TYPE="$(curl -sk -u "elastic:${MAIN_ELASTIC_PASSWORD}" "${MAIN_ES_URL}/_license" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['license']['type'])")"
 if [[ "${LICENSE_TYPE}" == "basic" ]]; then
-  echo "JWT realms are disabled on the current basic license. Use a trial or commercial license to validate this overlay." >&2
+  echo "JWT realms are disabled on the current basic license. Recreate the lab so the preinstalled ECK trial-license secret can take effect." >&2
   exit 1
 fi
 

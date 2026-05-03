@@ -17,11 +17,12 @@ spec:
       config:
         node.store.allow_mmap: false
         xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.order: 3
-        xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.token_type: id_token
+        xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.token_type: access_token
         xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.client_authentication.type: shared_secret
         xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.allowed_issuer: __JWT_TEST_ISSUER__
         xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.allowed_audiences: [ "__JWT_TEST_AUDIENCE__" ]
         xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.allowed_signature_algorithms: [HS256]
+        xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.allowed_subjects: [ "__JWT_TEST_PRINCIPAL__" ]
         xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.claims.principal: sub
         xpack.security.authc.realms.jwt.__JWT_TEST_REALM_NAME__.claims.groups: groups
       podTemplate:

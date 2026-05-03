@@ -29,6 +29,8 @@ AGENT_DASHBOARD_ID="otel-elasticsearch-monitoring-agent"
 AGENT_DASHBOARD_PATH="dashboards/elasticsearch-otel-monitoring-agent.ndjson"
 CONTRIB_DASHBOARD_ID="otel-elasticsearch-monitoring-contrib"
 CONTRIB_DASHBOARD_PATH="dashboards/elasticsearch-otel-monitoring-contrib.ndjson"
+JWT_DASHBOARD_ID="otel-elasticsearch-monitoring-jwt"
+JWT_DASHBOARD_PATH="dashboards/elasticsearch-otel-monitoring-jwt.ndjson"
 AUTOOPS_DERIVED_TSDS="metrics-elasticsearch.autoops-main"
 AUTOOPS_SOURCE_DATASTREAM="logs-elasticsearch.metrics-main"
 AGENT_METRICS_DATASTREAM_PATTERN="metrics-elasticsearch.stack_monitoring.*-main"
@@ -36,6 +38,8 @@ AGENT_METRICS_DATASTREAM_TARGET="metrics-elasticsearch.stack_monitoring.*-main,-
 AGENT_LOGS_DATASTREAM_PATTERN="logs-elasticsearch.server-main"
 CONTRIB_METRICS_DATASTREAM="metrics-elasticsearch.stack_monitoring.otel-main"
 CONTRIB_LOGS_DATASTREAM="logs-elasticsearch.logs.otel-main"
+JWT_METRICS_DATASTREAM="metrics-elasticsearch.stack_monitoring.otel-main"
+JWT_LOGS_DATASTREAM="logs-elasticsearch.logs.otel-main"
 : "${SEARCH_LOAD_STREAM_PREFIX:=logs-sampleapp}"
 : "${SEARCH_LOAD_STREAM_NAMESPACE:=default}"
 : "${SEARCH_LOAD_STREAM_COUNT:=5}"
@@ -77,15 +81,19 @@ monitoring_mode_agent() {
   [[ "${EDOT_MONITORING_MODE}" == "agent" ]]
 }
 
+monitoring_mode_agent_jwt() {
+  [[ "${EDOT_MONITORING_MODE}" == "agent-jwt" ]]
+}
+
 monitoring_mode_contrib() {
   [[ "${EDOT_MONITORING_MODE}" == "contrib" ]]
 }
 
 validate_monitoring_mode() {
   case "${EDOT_MONITORING_MODE}" in
-    autoops|agent|contrib) ;;
+    autoops|agent|agent-jwt|contrib) ;;
     *)
-      echo "Unsupported EDOT_MONITORING_MODE: ${EDOT_MONITORING_MODE}. Use autoops, agent, or contrib." >&2
+      echo "Unsupported EDOT_MONITORING_MODE: ${EDOT_MONITORING_MODE}. Use autoops, agent, agent-jwt, or contrib." >&2
       return 1
       ;;
   esac
@@ -96,6 +104,8 @@ current_dashboard_id() {
     printf '%s\n' "${CONTRIB_DASHBOARD_ID}"
   elif monitoring_mode_agent; then
     printf '%s\n' "${AGENT_DASHBOARD_ID}"
+  elif monitoring_mode_agent_jwt; then
+    printf '%s\n' "${JWT_DASHBOARD_ID}"
   else
     printf '%s\n' "${AUTOOPS_DASHBOARD_ID}"
   fi
@@ -106,6 +116,8 @@ current_dashboard_path() {
     printf '%s\n' "${CONTRIB_DASHBOARD_PATH}"
   elif monitoring_mode_agent; then
     printf '%s\n' "${AGENT_DASHBOARD_PATH}"
+  elif monitoring_mode_agent_jwt; then
+    printf '%s\n' "${JWT_DASHBOARD_PATH}"
   else
     printf '%s\n' "${AUTOOPS_DASHBOARD_PATH}"
   fi
@@ -138,6 +150,8 @@ export AGENT_DASHBOARD_ID
 export AGENT_DASHBOARD_PATH
 export CONTRIB_DASHBOARD_ID
 export CONTRIB_DASHBOARD_PATH
+export JWT_DASHBOARD_ID
+export JWT_DASHBOARD_PATH
 export AUTOOPS_DERIVED_TSDS
 export AUTOOPS_SOURCE_DATASTREAM
 export AGENT_METRICS_DATASTREAM_PATTERN
@@ -145,6 +159,8 @@ export AGENT_METRICS_DATASTREAM_TARGET
 export AGENT_LOGS_DATASTREAM_PATTERN
 export CONTRIB_METRICS_DATASTREAM
 export CONTRIB_LOGS_DATASTREAM
+export JWT_METRICS_DATASTREAM
+export JWT_LOGS_DATASTREAM
 export SEARCH_LOAD_STREAM_PREFIX
 export SEARCH_LOAD_STREAM_NAMESPACE
 export SEARCH_LOAD_STREAM_COUNT

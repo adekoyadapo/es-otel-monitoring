@@ -49,13 +49,13 @@ create_role_and_user() {
         -X PUT "${url}/_security/role/${role_name}" \
         -d "${role_body}" || true
     )"
-    if [[ "${role_code}" == "200" ]]; then
+    if [[ "${role_code}" == "200" || "${role_code}" == "201" || "${role_code}" == "409" ]]; then
       break
     fi
     sleep 3
   done
 
-  if [[ "${role_code}" != "200" ]]; then
+  if [[ "${role_code}" != "200" && "${role_code}" != "201" && "${role_code}" != "409" ]]; then
     echo "Failed to create role ${role_name} on ${url}" >&2
     exit 1
   fi
@@ -64,16 +64,16 @@ create_role_and_user() {
     user_code="$(
       curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${elastic_password}" \
         -H 'Content-Type: application/json' \
-        -X POST "${url}/_security/user/${username}" \
+        -X PUT "${url}/_security/user/${username}" \
         -d "{\"password\":\"${user_password}\",\"roles\":${user_roles_json}}" || true
     )"
-    if [[ "${user_code}" == "200" ]]; then
+    if [[ "${user_code}" == "200" || "${user_code}" == "201" || "${user_code}" == "409" ]]; then
       break
     fi
     sleep 3
   done
 
-  if [[ "${user_code}" != "200" ]]; then
+  if [[ "${user_code}" != "200" && "${user_code}" != "201" && "${user_code}" != "409" ]]; then
     echo "Failed to create user ${username} on ${url}" >&2
     exit 1
   fi
@@ -91,16 +91,16 @@ create_user() {
     user_code="$(
       curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${elastic_password}" \
         -H 'Content-Type: application/json' \
-        -X POST "${url}/_security/user/${username}" \
+        -X PUT "${url}/_security/user/${username}" \
         -d "{\"password\":\"${user_password}\",\"roles\":${user_roles_json}}" || true
     )"
-    if [[ "${user_code}" == "200" ]]; then
+    if [[ "${user_code}" == "200" || "${user_code}" == "201" || "${user_code}" == "409" ]]; then
       break
     fi
     sleep 3
   done
 
-  if [[ "${user_code}" != "200" ]]; then
+  if [[ "${user_code}" != "200" && "${user_code}" != "201" && "${user_code}" != "409" ]]; then
     echo "Failed to create user ${username} on ${url}" >&2
     exit 1
   fi
@@ -185,15 +185,18 @@ if monitoring_mode_agent; then
   kubectl -n lab-monitoring delete cronjob edot-autoops-tsds-deriver --ignore-not-found
   sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-metrics-agent.yaml | kubectl apply -f -
   sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-logs-agent.yaml | kubectl apply -f -
+elif monitoring_mode_agent_jwt; then
+  bash ./scripts/deploy_agent_jwt.sh
+  kubectl -n lab-monitoring delete cronjob edot-autoops-tsds-deriver --ignore-not-found
 elif monitoring_mode_contrib; then
-  kubectl apply -f manifests/edot/gateway.yaml
-  kubectl apply -f manifests/edot/main-logs.yaml
+  sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/gateway.yaml | kubectl apply -f -
+  sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-logs.yaml | kubectl apply -f -
   sed "s|__OTEL_CONTRIB_COLLECTOR_VERSION__|${OTEL_CONTRIB_COLLECTOR_VERSION}|g" manifests/edot/main-metrics-contrib.yaml | kubectl apply -f -
   kubectl -n lab-monitoring delete cronjob edot-autoops-tsds-deriver --ignore-not-found
 else
-  kubectl apply -f manifests/edot/gateway.yaml
-  kubectl apply -f manifests/edot/main-logs.yaml
-  kubectl apply -f manifests/edot/main-metrics.yaml
+  sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/gateway.yaml | kubectl apply -f -
+  sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-logs.yaml | kubectl apply -f -
+  sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-metrics.yaml | kubectl apply -f -
   kubectl apply -f manifests/edot/autoops-tsds-deriver.yaml
 fi
 
@@ -203,11 +206,17 @@ if monitoring_mode_autoops; then
   RESET_AUTOOPS_TSDS=true bash ./scripts/install_autoops_tsds_assets.sh
 fi
 
-kubectl -n lab-main rollout status deploy/edot-main-metrics --timeout=300s
-kubectl -n lab-main rollout status ds/edot-main-logs --timeout=300s
+if monitoring_mode_agent_jwt; then
+  kubectl -n lab-main wait --for=condition=Available deploy/edot-main-metrics-jwt --timeout=600s
+  kubectl -n lab-main wait --for=condition=Ready pod -l app.kubernetes.io/name=edot-main-logs-jwt --timeout=600s
+else
+  kubectl -n lab-main rollout status deploy/edot-main-metrics --timeout=300s
+  kubectl -n lab-main rollout status ds/edot-main-logs --timeout=300s
+fi
+
 kubectl -n lab-main rollout status deploy/main-search-load --timeout=300s
 
-if monitoring_mode_autoops || monitoring_mode_contrib; then
+if monitoring_mode_autoops || monitoring_mode_contrib || monitoring_mode_agent_jwt; then
   kubectl -n lab-monitoring rollout status deploy/edot-gateway --timeout=300s
 fi
 

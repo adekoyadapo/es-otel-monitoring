@@ -92,7 +92,7 @@ spec:
     spec:
       containers:
         - name: edot-gateway
-          image: docker.elastic.co/elastic-agent/elastic-otel-collector-wolfi:9.3.3
+          image: docker.elastic.co/elastic-agent/elastic-otel-collector-wolfi:__ELASTIC_AGENT_VERSION__
           args:
             - --config
             - /etc/otel/config.yaml

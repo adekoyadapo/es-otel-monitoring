@@ -15,6 +15,7 @@ if [[ ! -s "${CRDS_MANIFEST}" ]] || ! grep -q "CustomResourceDefinition" "${CRDS
 fi
 
 kubectl apply -f manifests/namespaces.yaml
+kubectl apply -f manifests/elastic/eck-trial-license.yaml
 kubectl apply -f "${CRDS_MANIFEST}"
 kubectl apply -f "${OPERATOR_MANIFEST}"
 

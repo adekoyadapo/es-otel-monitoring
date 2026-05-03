@@ -60,6 +60,8 @@ DERIVED_TSDS_PRESENT=0
 AGENT_METRICS_PRESENT=0
 AGENT_LOGS_PRESENT=0
 CONTRIB_METRICS_PRESENT=0
+JWT_METRICS_PRESENT=0
+JWT_LOGS_PRESENT=0
 for _ in $(seq 1 20); do
   ES_METRICS_DATASTREAM_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${AUTOOPS_SOURCE_DATASTREAM}")"
   ES_LOGS_DATASTREAM_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/logs-elasticsearch.logs.otel-main")"
@@ -67,6 +69,8 @@ for _ in $(seq 1 20); do
   AGENT_METRICS_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${AGENT_METRICS_DATASTREAM_PATTERN}")"
   AGENT_LOGS_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${AGENT_LOGS_DATASTREAM_PATTERN}")"
   CONTRIB_METRICS_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${CONTRIB_METRICS_DATASTREAM}")"
+  JWT_METRICS_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${JWT_METRICS_DATASTREAM}")"
+  JWT_LOGS_CODE="$(curl -sk -o /dev/null -w '%{http_code}' -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/_data_stream/${JWT_LOGS_DATASTREAM}")"
   if [[ "${ES_METRICS_DATASTREAM_CODE}" == "200" ]]; then
     ES_METRICS_DATASTREAM_PRESENT=1
   fi
@@ -85,18 +89,30 @@ for _ in $(seq 1 20); do
   if [[ "${CONTRIB_METRICS_CODE}" == "200" ]]; then
     CONTRIB_METRICS_PRESENT=1
   fi
+  if [[ "${JWT_METRICS_CODE}" == "200" ]]; then
+    JWT_METRICS_PRESENT=1
+  fi
+  if [[ "${JWT_LOGS_CODE}" == "200" ]]; then
+    JWT_LOGS_PRESENT=1
+  fi
   ES_METRICS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${AUTOOPS_SOURCE_DATASTREAM}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
   ES_LOGS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/logs-elasticsearch.logs.otel-main/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
   DERIVED_TSDS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${AUTOOPS_DERIVED_TSDS}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
   AGENT_METRICS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${AGENT_METRICS_DATASTREAM_TARGET}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
   AGENT_LOGS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${AGENT_LOGS_DATASTREAM_PATTERN}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
   CONTRIB_METRICS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${CONTRIB_METRICS_DATASTREAM}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
+  JWT_METRICS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${JWT_METRICS_DATASTREAM}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
+  JWT_LOGS_COUNT="$(curl -sk -u "elastic:${MONITORING_ELASTIC_PASSWORD}" "${MONITORING_ES_URL}/${JWT_LOGS_DATASTREAM}/_count" | sed -n 's/.*"count":\([0-9][0-9]*\).*/\1/p')"
   if monitoring_mode_autoops; then
     if [[ "${ES_METRICS_DATASTREAM_PRESENT}" -eq 1 && "${ES_LOGS_DATASTREAM_PRESENT}" -eq 1 && "${DERIVED_TSDS_PRESENT}" -eq 1 && "${ES_METRICS_COUNT:-0}" -gt 0 && "${ES_LOGS_COUNT:-0}" -gt 0 && "${DERIVED_TSDS_COUNT:-0}" -gt 0 ]]; then
       break
     fi
   elif monitoring_mode_agent; then
     if [[ "${AGENT_METRICS_PRESENT}" -eq 1 && "${AGENT_LOGS_PRESENT}" -eq 1 && "${AGENT_METRICS_COUNT:-0}" -gt 0 && "${AGENT_LOGS_COUNT:-0}" -gt 0 ]]; then
+      break
+    fi
+  elif monitoring_mode_agent_jwt; then
+    if [[ "${JWT_METRICS_PRESENT}" -eq 1 && "${JWT_LOGS_PRESENT}" -eq 1 && "${JWT_METRICS_COUNT:-0}" -gt 0 && "${JWT_LOGS_COUNT:-0}" -gt 0 ]]; then
       break
     fi
   else
@@ -117,16 +133,23 @@ if monitoring_mode_autoops; then
   if [[ "${DERIVED_TSDS_PRESENT}" -ne 1 ]]; then
     fail "Derived TSDS ${AUTOOPS_DERIVED_TSDS} was not created in the monitoring cluster"
   fi
-elif monitoring_mode_agent; then
-  if [[ "${AGENT_METRICS_PRESENT}" -ne 1 ]]; then
-    fail "Elastic Agent metrics data streams matching ${AGENT_METRICS_DATASTREAM_PATTERN} were not created in the monitoring cluster"
-  fi
-  if [[ "${AGENT_LOGS_PRESENT}" -ne 1 ]]; then
-    fail "Elastic Agent logs data streams matching ${AGENT_LOGS_DATASTREAM_PATTERN} were not created in the monitoring cluster"
-  fi
-else
-  if [[ "${ES_LOGS_DATASTREAM_PRESENT}" -ne 1 ]]; then
-    fail "Logs data stream ${CONTRIB_LOGS_DATASTREAM} was not created in the monitoring cluster"
+  elif monitoring_mode_agent; then
+    if [[ "${AGENT_METRICS_PRESENT}" -ne 1 ]]; then
+      fail "Elastic Agent metrics data streams matching ${AGENT_METRICS_DATASTREAM_PATTERN} were not created in the monitoring cluster"
+    fi
+    if [[ "${AGENT_LOGS_PRESENT}" -ne 1 ]]; then
+      fail "Elastic Agent logs data streams matching ${AGENT_LOGS_DATASTREAM_PATTERN} were not created in the monitoring cluster"
+    fi
+  elif monitoring_mode_agent_jwt; then
+    if [[ "${JWT_METRICS_PRESENT}" -ne 1 ]]; then
+      fail "JWT metrics data stream ${JWT_METRICS_DATASTREAM} was not created in the monitoring cluster"
+    fi
+    if [[ "${JWT_LOGS_PRESENT}" -ne 1 ]]; then
+      fail "JWT logs data stream ${JWT_LOGS_DATASTREAM} was not created in the monitoring cluster"
+    fi
+  else
+    if [[ "${ES_LOGS_DATASTREAM_PRESENT}" -ne 1 ]]; then
+      fail "Logs data stream ${CONTRIB_LOGS_DATASTREAM} was not created in the monitoring cluster"
   fi
   if [[ "${CONTRIB_METRICS_PRESENT}" -ne 1 ]]; then
     fail "Contrib metrics data stream ${CONTRIB_METRICS_DATASTREAM} was not created in the monitoring cluster"
@@ -145,6 +168,11 @@ elif monitoring_mode_agent; then
     fail "No Elastic Agent Elasticsearch metrics documents were shipped to the monitoring cluster"
   fi
   echo "${GREEN}  OK: Elastic Agent metrics data streams have ${AGENT_METRICS_COUNT} documents${RESET}"
+elif monitoring_mode_agent_jwt; then
+  if [[ "${JWT_METRICS_COUNT:-0}" -le 0 ]]; then
+    fail "No JWT Elasticsearch metrics documents were shipped to the monitoring cluster"
+  fi
+  echo "${GREEN}  OK: JWT metrics data stream has ${JWT_METRICS_COUNT} documents${RESET}"
 else
   if [[ "${CONTRIB_METRICS_COUNT:-0}" -le 0 ]]; then
     fail "No contrib Elasticsearch metrics documents were shipped to the monitoring cluster"
@@ -160,6 +188,8 @@ if monitoring_mode_autoops; then
   echo "${GREEN}  OK: derived TSDS has ${DERIVED_TSDS_COUNT} documents${RESET}"
 elif monitoring_mode_agent; then
   echo "${BLUE}  SKIP: derived TSDS is not used in agent mode${RESET}"
+elif monitoring_mode_agent_jwt; then
+  echo "${BLUE}  SKIP: derived TSDS is not used in agent-jwt mode${RESET}"
 else
   echo "${BLUE}  SKIP: derived TSDS is not used in contrib mode${RESET}"
 fi
@@ -175,6 +205,11 @@ elif monitoring_mode_agent; then
     fail "No Elastic Agent Elasticsearch log documents were shipped to the monitoring cluster"
   fi
   echo "${GREEN}  OK: Elastic Agent logs data streams have ${AGENT_LOGS_COUNT} documents${RESET}"
+elif monitoring_mode_agent_jwt; then
+  if [[ "${JWT_LOGS_COUNT:-0}" -le 0 ]]; then
+    fail "No JWT Elasticsearch log documents were shipped to the monitoring cluster"
+  fi
+  echo "${GREEN}  OK: JWT logs data stream has ${JWT_LOGS_COUNT} documents${RESET}"
 else
   if [[ "${ES_LOGS_COUNT:-0}" -le 0 ]]; then
     fail "No contrib Elasticsearch log documents were shipped to the monitoring cluster"

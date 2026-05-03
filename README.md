@@ -1,6 +1,6 @@
 # es-otel-monitoring
 
-This repository provisions a local `k3d` lab with two Elasticsearch clusters managed by ECK and three Elasticsearch monitoring paths:
+This repository provisions a local `k3d` lab with two Elasticsearch clusters managed by ECK and four Elasticsearch monitoring paths:
 
 - `autoops`
   - EDOT `autoops_es` collection
@@ -11,6 +11,10 @@ This repository provisions a local `k3d` lab with two Elasticsearch clusters man
   - Elasticsearch Stack Monitoring metrics collected through Elastic Agent inputs
   - Elasticsearch logs collected through Elastic Agent `filestream`
   - metrics shipped directly to stack-monitoring data streams in the monitoring cluster
+- `agent-jwt`
+  - JWT-authenticated Elastic Agent EDOT runtime containers
+  - local JWT-backed source proxy plus a native OTLP metrics exporter sidecar
+  - OTLP-native metrics and logs shipped through `edot-gateway`
 - `contrib`
   - upstream OpenTelemetry Collector Contrib receiver path
   - Elasticsearch metrics collected through the contrib receiver
@@ -23,10 +27,11 @@ The lab also deploys a synthetic workload so the dashboards show index and searc
 
 The goal of the `agent` path is not generic OpenTelemetry scraping of Elasticsearch. The goal is Elastic-supported collection of Elasticsearch monitoring metrics and logs with Elastic Agent and the EDOT runtime.
 
-The repo keeps all three paths intentionally:
+The repo keeps all four paths intentionally:
 
 - `autoops` for raw `autoops_es` collection plus derivation
 - `agent` for the supported Elastic Agent stack-monitoring path
+- `agent-jwt` for an isolated JWT-authenticated EDOT workflow
 - `contrib` for the upstream collector-contrib comparison path
 
 That distinction matters:
@@ -35,8 +40,10 @@ That distinction matters:
 - Elastic Agent inputs and Beat receivers produce ECS-shaped Elasticsearch monitoring data.
 - Elasticsearch Stack Monitoring metrics are expected to land in Elastic monitoring data streams such as `metrics-elasticsearch.stack_monitoring.*-main`.
 - The upstream OpenTelemetry Collector Contrib `elasticsearchreceiver` is not part of the supported EDOT component set for this use case.
+- The isolated JWT flow uses a separate EDOT path and does not share the standard `agent` collectors.
+- The JWT path now emits native OTLP metrics from a local exporter sidecar and forwards them through the Elastic Agent EDOT runtime.
 
-The `contrib` path in this repo uses the upstream `elasticsearchreceiver` and is kept as a separate third option for direct comparison with the Agent path.
+The `contrib` path in this repo uses the upstream `elasticsearchreceiver` and is kept as a separate comparison path alongside the Agent and JWT workflows.
 
 Official references used for this change:
 
@@ -147,7 +154,8 @@ Tradeoffs:
 
 Compatibility note:
 
-- `EDOT_MONITORING_MODE=contrib` is a supported third option and uses the collector-contrib path
+- `EDOT_MONITORING_MODE=agent-jwt` is the isolated JWT-authenticated EDOT path.
+- `EDOT_MONITORING_MODE=contrib` remains available as the collector-contrib comparison path.
 
 ## Repository Layout
 
@@ -162,7 +170,7 @@ Compatibility note:
 - `monitoring-modes.md`
   - deployment commands and flow comparison for `autoops`, `agent`, and `contrib`
 - `agent-otel-jwt.md`
-  - JWT-based source-cluster auth pattern for Agent + EDOT gateway deployments
+  - JWT setup and config flow
 - `scripts`
   - deployment, verification, dashboard generation, and helper scripts
 - `images`
@@ -184,16 +192,36 @@ Compatibility note:
   - upstream contrib dashboard set
 - [dashboards/elasticsearch-otel-monitoring-contrib.export.json](dashboards/elasticsearch-otel-monitoring-contrib.export.json)
   - structured wrapper for the contrib dashboard objects
+- [dashboards/elasticsearch-otel-monitoring-jwt.ndjson](dashboards/elasticsearch-otel-monitoring-jwt.ndjson)
+  - JWT OTLP dashboard set
+- [dashboards/elasticsearch-otel-monitoring-jwt.export.json](dashboards/elasticsearch-otel-monitoring-jwt.export.json)
+  - structured wrapper for the JWT dashboard objects
 - [scripts/build_otel_dashboard_ndjson.py](scripts/build_otel_dashboard_ndjson.py)
   - regenerates the autoops dashboards
 - [scripts/build_otel_agent_dashboard_ndjson.py](scripts/build_otel_agent_dashboard_ndjson.py)
   - regenerates the Elastic Agent dashboards
 - [scripts/build_otel_contrib_dashboard_ndjson.py](scripts/build_otel_contrib_dashboard_ndjson.py)
   - regenerates the contrib dashboards
+- [scripts/build_otel_jwt_dashboard_ndjson.py](scripts/build_otel_jwt_dashboard_ndjson.py)
+  - regenerates the JWT OTLP dashboards
 - [scripts/import_monitoring_dashboard.sh](scripts/import_monitoring_dashboard.sh)
   - imports the dashboard set for the selected mode
+- [scripts/import_jwt_dashboard.sh](scripts/import_jwt_dashboard.sh)
+  - imports the JWT dashboard set
 
 The Elastic Agent dashboard data view intentionally excludes the legacy `metrics-elasticsearch.stack_monitoring.otel-main` stream so a reused lab does not mix old upstream-receiver data with the new Agent data.
+
+The JWT dashboard is separate again and reads the OTLP metrics stream directly,
+so it can be used without touching the standard Agent dashboard objects. The
+saved objects target the native OTLP metrics stream produced by the JWT
+workflow. The JWT setup also keeps its own logs collector and OTLP gateway path
+separate from the normal `agent` run.
+
+JWT setup details, config sections, authentication flow, data-shape notes, and
+sampling guidance live in [agent-otel-jwt.md](agent-otel-jwt.md).
+The JWT source-cluster overlay relies on the ECK trial-license secret being
+applied before the clusters are created; if the source cluster is left on
+`basic`, the exporter will return 401s.
 
 ## Dashboard Views
 
@@ -328,11 +356,12 @@ make search-load-up SEARCH_LOAD_NUMBER_OF_SHARDS=2 SEARCH_LOAD_NUMBER_OF_REPLICA
 2. install ingress-nginx
 3. install cert-manager
 4. install ECK
-5. deploy the main and monitoring Elasticsearch/Kibana stacks
-6. create monitoring users and Kubernetes Secrets
-7. deploy the selected monitoring mode
-8. deploy the synthetic workload
-9. import the dashboard set for the selected mode when the stack version supports it
+5. create the ECK trial-license secret in `elastic-system`
+6. deploy the main and monitoring Elasticsearch/Kibana stacks
+7. create monitoring users and Kubernetes Secrets
+8. deploy the selected monitoring mode
+9. deploy the synthetic workload
+10. import the dashboard set for the selected mode when the stack version supports it
 
 Mode-specific behavior:
 
@@ -347,6 +376,10 @@ Mode-specific behavior:
   - deploys the restored contrib receiver manifest and the shared gateway
   - keeps the direct contrib metrics stream
   - does not use the autoops deriver
+- `agent-jwt`
+  - relies on the ECK trial-license secret so JWT realms are available on fresh installs
+  - deploys the isolated JWT OTLP workflow after the main cluster comes up
+  - fails fast if the source cluster cannot enable JWT realms
 
 ## Validation
 
@@ -407,7 +440,7 @@ kubectl -n lab-monitoring get pods
 
 ## Mode Comparison
 
-The three modes differ by where collection starts and where the first durable data lands:
+The four modes differ by where collection starts and where the first durable data lands:
 
 - `autoops`
   - upstream `autoops_es` payload
@@ -417,6 +450,12 @@ The three modes differ by where collection starts and where the first durable da
   - Elastic Agent with EDOT runtime
   - Elasticsearch integration metrics and `filestream` logs
   - data lands directly in Elastic monitoring data streams
+- `agent-jwt`
+  - JWT-authenticated Elastic Agent EDOT runtime
+  - pod-local auth proxy injects JWT and client-auth headers for Elasticsearch
+  - native OTLP metrics are emitted by a local exporter sidecar and shipped through `edot-gateway`
+  - logs are shipped separately through `edot-gateway`
+  - data lands in dedicated OTLP monitoring streams
 - `contrib`
   - upstream OpenTelemetry Collector Contrib Elasticsearch receiver
   - metrics are forwarded through the shared gateway
@@ -432,21 +471,15 @@ It now needs to be read as:
 
 - `autoops` for raw-source-plus-derivation
 - `agent` for Elastic Agent EDOT runtime collection
+- `agent-jwt` for the isolated JWT-authenticated EDOT path
 - `contrib` for the upstream collector-contrib comparison path
 
 ## Notes
 
-- `EDOT_MONITORING_MODE=autoops` remains useful when the raw `autoops_es` payload is required.
+- `EDOT_MONITORING_MODE=autoops` remains useful when the raw `autoops_es`
+  payload is required.
 - `EDOT_MONITORING_MODE=agent` is the Elastic-supported Stack Monitoring path.
-- `EDOT_MONITORING_MODE=contrib` remains available as the upstream collector-contrib comparison path.
-- JWT-based source-cluster auth is documented in [agent-otel-jwt.md](agent-otel-jwt.md).
-- JWT test overlay commands:
-  - `make jwt-test-up`
-    - applies a temporary JWT realm overlay to `elasticsearch-main`
-    - creates the role and role mapping needed for a signed test token
-  - `make jwt-test`
-    - mints a JWT and validates it against `/_security/_authenticate`
-    - verifies a JWT-authenticated cluster health call
-  - `make jwt-test-down`
-    - removes the overlay and deletes the JWT-specific role, role mapping, and secret
-- JWT realms are not enabled on the repository's current basic license. The test harness will fail fast until you run the lab with a trial or commercial license that permits JWT realms.
+- `EDOT_MONITORING_MODE=agent-jwt` is the isolated JWT-authenticated EDOT path with native OTLP metrics.
+- `EDOT_MONITORING_MODE=contrib` remains available as the upstream
+  collector-contrib comparison path.
+- JWT setup details are documented in [agent-otel-jwt.md](agent-otel-jwt.md).

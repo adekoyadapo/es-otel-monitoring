@@ -5,10 +5,11 @@ This repository exposes three deployment commands through `EDOT_MONITORING_MODE`
 ```bash
 make up EDOT_MONITORING_MODE=autoops
 make up EDOT_MONITORING_MODE=agent
+make up EDOT_MONITORING_MODE=agent-jwt
 make up EDOT_MONITORING_MODE=contrib
 ```
 
-All three modes are supported and deploy different collection paths.
+All four modes are supported and deploy different collection paths.
 
 ## At A Glance
 
@@ -16,6 +17,7 @@ All three modes are supported and deploy different collection paths.
 |---|---|---|---|---|---|
 | `autoops` | EDOT Collector + gateway + deriver | `metrics-elasticsearch.autoops-main` | `logs-elasticsearch.metrics-main` and `logs-elasticsearch.logs.otel-main` | Yes | Preserve raw `autoops_es` and derive a curated TSDS |
 | `agent` | Elastic Agent with EDOT runtime | `metrics-elasticsearch.stack_monitoring.*-main` | `logs-elasticsearch.server-main` | No | Direct Elastic-supported stack-monitoring path |
+| `agent-jwt` | JWT-authenticated Elastic Agent EDOT runtime + gateway | `metrics-elasticsearch.stack_monitoring.otel-main` | `logs-elasticsearch.logs.otel-main` | No | Validate JWT auth and ship native OTLP metrics/logs through EDOT gateway without clashing with the standard Agent path |
 | `contrib` | Collector Contrib receiver + gateway | `metrics-elasticsearch.stack_monitoring.otel-main` | `logs-elasticsearch.logs.otel-main` | No | Upstream Elasticsearch receiver path for comparison and direct stack-monitoring-style output |
 
 ## Deploy Commands
@@ -23,6 +25,7 @@ All three modes are supported and deploy different collection paths.
 ```bash
 make up EDOT_MONITORING_MODE=autoops
 make up EDOT_MONITORING_MODE=agent
+make up EDOT_MONITORING_MODE=agent-jwt
 make up EDOT_MONITORING_MODE=contrib
 ```
 
@@ -31,6 +34,7 @@ Validate the selected mode:
 ```bash
 make test EDOT_MONITORING_MODE=autoops
 make test EDOT_MONITORING_MODE=agent
+make test EDOT_MONITORING_MODE=agent-jwt
 make test EDOT_MONITORING_MODE=contrib
 ```
 
@@ -245,6 +249,118 @@ outputs:
       - other-otel-gateway.example:4317
 ```
 
+## 3. `agent-jwt`
+
+Primary manifests:
+
+- [manifests/elastic/eck-trial-license.yaml](manifests/elastic/eck-trial-license.yaml)
+- [manifests/jwt/elasticsearch-main-jwt.yaml](manifests/jwt/elasticsearch-main-jwt.yaml)
+- [manifests/edot/main-metrics-otel-jwt.yaml](manifests/edot/main-metrics-otel-jwt.yaml)
+- [manifests/edot/main-logs-otel-jwt.yaml](manifests/edot/main-logs-otel-jwt.yaml)
+- [manifests/edot/gateway.yaml](manifests/edot/gateway.yaml)
+
+### Runtime flow
+
+1. The ECK trial-license secret is applied before the clusters are created, so fresh installs can enable JWT realms.
+2. The JWT realm overlay is applied to the source Elasticsearch cluster.
+3. The JWT metrics pod runs a local auth proxy sidecar that injects the JWT bearer token and `ES-Client-Authentication` header.
+4. A local exporter sidecar queries Elasticsearch through that proxy and emits native OTLP metrics to the local EDOT collector on `127.0.0.1:4318`.
+5. The Elastic Agent EDOT runtime receives those OTLP points and forwards them to `edot-gateway`.
+6. The JWT logs collector tails Elasticsearch server logs.
+7. Both collectors ship through `edot-gateway`.
+8. Dashboards read the OTLP metrics stream and the logs stream directly.
+
+### Key Kubernetes config
+
+The JWT workflow is intentionally isolated from the standard Agent workflow.
+It uses the ECK trial-license secret, the JWT realm overlay, collectors, a local
+auth proxy, and dedicated data streams.
+JWT auth itself still requires a trial or commercial license on the source
+cluster; otherwise the exporter will see 401s even if the overlay is present.
+
+JWT realm overlay:
+
+```yaml
+secureSettings:
+  - secretName: elasticsearch-main-jwt-secure-settings
+
+nodeSets:
+  - name: default
+    config:
+      xpack.security.authc.realms.jwt.jwt1.order: 3
+      xpack.security.authc.realms.jwt.jwt1.client_authentication.type: shared_secret
+      xpack.security.authc.realms.jwt.jwt1.allowed_issuer: edot-jwt-test
+      xpack.security.authc.realms.jwt.jwt1.allowed_audiences: [ "edot-jwt-test" ]
+      xpack.security.authc.realms.jwt.jwt1.allowed_signature_algorithms: [HS256]
+```
+
+JWT metrics exporter and collector:
+
+```yaml
+containers:
+  - name: jwt-metrics-exporter
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        python3 -m pip install --no-cache-dir opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
+        exec python3 /opt/jwt-exporter/exporter.py
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 127.0.0.1:4318
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [otlp_grpc/gateway]
+```
+
+The exporter sidecar is responsible for the JWT-authenticated requests and for
+translating the source Elasticsearch responses into native OTLP metric points.
+The collector only receives those points and forwards them through OTLP.
+
+JWT logs collector:
+
+```yaml
+receivers:
+  filelog/elasticsearch:
+    include:
+      - /var/log/containers/*_lab-main_elasticsearch-*.log
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog/elasticsearch]
+      exporters: [otlp_grpc/gateway]
+```
+
+### Why use it
+
+- Validates JWT realm auth end to end.
+- Keeps the JWT path isolated from the normal Agent collectors.
+- Produces native OTLP metrics instead of logs-shaped monitoring records.
+- Ships to the EDOT gateway first, so the monitoring cluster stays the final landing point.
+
+### To ship to another OTEL endpoint
+
+This mode is already gateway-shaped, so the main changes are:
+
+1. change the OTLP exporter endpoint in the JWT collector manifests
+2. keep the JWT realm, token-minting, and exporter sidecar pieces unchanged
+3. if the downstream endpoint is not Elasticsearch, replace the dashboard data streams and any field filters
+
+The recommended change is straightforward:
+
+```yaml
+exporters:
+  otlp_grpc/external:
+    endpoint: other-gateway.example:4317
+```
+
 Notable impact:
 
 - this is a bigger design change than in `autoops`
@@ -352,7 +468,7 @@ service:
 | Runtime shape | EDOT Collector + gateway + deriver | Elastic Agent + EDOT runtime | Collector Contrib receiver + gateway |
 | Primary config object | collector `config.yaml` | Agent `agent.yml` | collector `config.yaml` |
 | Metrics source | `autoops_es` | Elasticsearch integration | upstream Elasticsearch receiver |
-| First landing format | logs-shaped source docs | stack-monitoring metrics streams | metrics stream via OTLP gateway |
+| First landing format | logs-shaped source docs | stack-monitoring metrics streams | native OTLP metrics via local exporter and gateway |
 | Gateway required | yes | no | yes |
 | Deriver required | yes | no | no |
 | External OTEL forwarding effort | lower | higher | lower |

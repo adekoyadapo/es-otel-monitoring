@@ -45,7 +45,7 @@ export SEARCH_LOAD_NUMBER_OF_REPLICAS
 export SEARCH_LOAD_QUERY_SIZE
 export SEARCH_LOAD_DEPLOYMENT_REPLICAS
 
-.PHONY: help up down reset status logs test import-dashboard search-load-up search-load-down search-load-reset jwt-test-up jwt-test jwt-test-down
+.PHONY: help up down reset status logs test import-dashboard search-load-up search-load-down search-load-reset jwt-test-up jwt-test jwt-test-down jwt-agent-up jwt-agent-test jwt-agent-down jwt-agent
 
 help:
 	@echo "Targets:"
@@ -58,6 +58,12 @@ help:
 	@echo "  make jwt-test-up       Install the JWT overlay and supporting role mapping"
 	@echo "  make jwt-test          Validate JWT auth against the source cluster"
 	@echo "  make jwt-test-down     Remove the JWT overlay and supporting JWT resources"
+	@echo "  make jwt-agent-up      Deploy the separate JWT OTEL metrics/logs workflow"
+	@echo "  make jwt-agent-test    Validate JWT OTEL metrics/log shipping end-to-end"
+	@echo "  make jwt-agent-down    Remove the JWT OTEL collectors and JWT overlay"
+	@echo "  make jwt-agent         Full end-to-end: ensure cluster is up + JWT overlay + JWT OTEL collectors + test"
+	@echo "  make up EDOT_MONITORING_MODE=agent-jwt  Boot the isolated JWT workflow"
+	@echo "  make test EDOT_MONITORING_MODE=agent-jwt Validate the isolated JWT workflow"
 	@echo "  make status  Show cluster nodes, pods, ingresses, and certificates"
 	@echo "  make logs    Show useful workload logs for the lab"
 	@echo "  make down    Delete the local k3d lab"
@@ -153,3 +159,16 @@ jwt-test:
 
 jwt-test-down:
 	@bash ./scripts/cleanup_jwt_test.sh
+
+jwt-agent-up:
+	@bash ./scripts/deploy_agent_jwt.sh
+
+jwt-agent-test:
+	@bash ./scripts/test_agent_jwt.sh
+
+jwt-agent-down:
+	@bash ./scripts/cleanup_agent_jwt.sh
+
+jwt-agent:
+	@$(MAKE) up EDOT_MONITORING_MODE=agent-jwt
+	@bash ./scripts/test_agent_jwt.sh

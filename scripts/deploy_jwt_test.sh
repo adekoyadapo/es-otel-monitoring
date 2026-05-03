@@ -32,22 +32,6 @@ print(json.dumps({"keys": [{"kty": "oct", "kid": kid, "alg": "HS256", "use": "si
 PY
 )"
 
-kubectl -n lab-main port-forward service/elasticsearch-main-es-http 19201:9200 >/tmp/edot-jwt-main-pf.log 2>&1 &
-PF_PID="$!"
-trap 'kill "${PF_PID}" >/dev/null 2>&1 || true' EXIT
-for _ in $(seq 1 30); do
-  if curl -sk "https://127.0.0.1:19201/_cluster/health" >/dev/null 2>&1; then
-    break
-  fi
-  sleep 1
-done
-
-LICENSE_TYPE="$(curl -sk -u "elastic:${MAIN_ELASTIC_PASSWORD}" "https://127.0.0.1:19201/_license" | sed -n 's/.*"type":"\([^"]*\)".*/\1/p')"
-if [[ "${LICENSE_TYPE}" == "basic" ]]; then
-  echo "JWT realms are disabled on the current basic license. Use a trial or commercial license to validate this overlay." >&2
-  exit 1
-fi
-
 kubectl -n lab-main create secret generic "${JWT_TEST_SECRET_NAME}" \
   --from-literal="xpack.security.authc.realms.jwt.${JWT_TEST_REALM_NAME}.client_authentication.shared_secret=${JWT_SHARED_SECRET}" \
   --from-literal="xpack.security.authc.realms.jwt.${JWT_TEST_REALM_NAME}.hmac_jwkset=${JWT_JWK_JSON}" \
@@ -65,7 +49,26 @@ sed \
   manifests/jwt/elasticsearch-main-jwt.yaml | kubectl apply -f -
 
 kubectl -n lab-main wait --for=condition=Ready pod -l elasticsearch.k8s.elastic.co/cluster-name=elasticsearch-main --timeout=900s
+# ECK does a second reconcile pass to write the keystore after the pod is Ready.
+# Wait for phase=Ready on the Elasticsearch resource itself before proceeding.
+for _ in $(seq 1 60); do
+  phase="$(kubectl -n lab-main get elasticsearch elasticsearch-main -o jsonpath='{.status.phase}' 2>/dev/null)"
+  if [[ "${phase}" == "Ready" ]]; then
+    break
+  fi
+  sleep 5
+done
 kubectl -n lab-main wait --for=condition=Ready pod -l kibana.k8s.elastic.co/name=kibana-main --timeout=420s
+
+kubectl -n lab-main port-forward service/elasticsearch-main-es-http 19201:9200 >/tmp/edot-jwt-main-pf.log 2>&1 &
+PF_PID="$!"
+trap 'kill "${PF_PID}" >/dev/null 2>&1 || true' EXIT
+for _ in $(seq 1 30); do
+  if curl -sk "https://127.0.0.1:19201/_cluster/health" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
 
 create_or_update_json() {
   local url="$1"
@@ -97,7 +100,7 @@ create_or_update_json \
   "https://127.0.0.1:19201" \
   "${MAIN_ELASTIC_PASSWORD}" \
   "/_security/role/${JWT_TEST_ROLE_NAME}" \
-  '{"cluster":["monitor"],"indices":[{"names":[".monitoring-*","metrics-*","logs-*"],"privileges":["monitor","read","view_index_metadata"]}]}'
+  '{"cluster":["monitor","manage_ilm","manage_index_templates"],"indices":[{"names":["*"],"privileges":["monitor","read","view_index_metadata"]}]}'
 
 create_or_update_json \
   "https://127.0.0.1:19201" \
