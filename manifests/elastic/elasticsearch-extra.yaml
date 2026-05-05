@@ -1,0 +1,26 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: __EXTRA_CLUSTER_NAME__
+  namespace: __EXTRA_CLUSTER_NAMESPACE__
+spec:
+  version: __ES_VERSION__
+  http:
+    tls:
+      certificate:
+        secretName: es-extra-tls
+  nodeSets:
+    - name: default
+      count: 1
+      config:
+        node.store.allow_mmap: false
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                requests:
+                  cpu: "500m"
+                  memory: 1Gi
+                limits:
+                  memory: 1Gi

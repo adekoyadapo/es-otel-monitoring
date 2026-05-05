@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: es-extra-cert
+  namespace: __EXTRA_CLUSTER_NAMESPACE__
+spec:
+  secretName: es-extra-tls
+  issuerRef:
+    name: lab-ca-issuer
+    kind: ClusterIssuer
+  dnsNames:
+    - __EXTRA_CLUSTER_NAME__-es-http.__EXTRA_CLUSTER_NAMESPACE__.svc
+    - __EXTRA_CLUSTER_NAME__-es-http.__EXTRA_CLUSTER_NAMESPACE__.svc.cluster.local

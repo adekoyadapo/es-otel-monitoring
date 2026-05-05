@@ -185,8 +185,8 @@ if monitoring_mode_agent; then
   kubectl -n lab-monitoring delete cronjob edot-autoops-tsds-deriver --ignore-not-found
   sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-metrics-agent.yaml | kubectl apply -f -
   sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/main-logs-agent.yaml | kubectl apply -f -
-elif monitoring_mode_agent_jwt; then
-  bash ./scripts/deploy_agent_jwt.sh
+elif monitoring_mode_agent_api; then
+  bash ./scripts/deploy_agent_api.sh
   kubectl -n lab-monitoring delete cronjob edot-autoops-tsds-deriver --ignore-not-found
 elif monitoring_mode_contrib; then
   sed "s|__ELASTIC_AGENT_VERSION__|${ELASTIC_AGENT_VERSION}|g" manifests/edot/gateway.yaml | kubectl apply -f -
@@ -206,9 +206,9 @@ if monitoring_mode_autoops; then
   RESET_AUTOOPS_TSDS=true bash ./scripts/install_autoops_tsds_assets.sh
 fi
 
-if monitoring_mode_agent_jwt; then
-  kubectl -n lab-main wait --for=condition=Available deploy/edot-main-metrics-jwt --timeout=600s
-  kubectl -n lab-main wait --for=condition=Ready pod -l app.kubernetes.io/name=edot-main-logs-jwt --timeout=600s
+if monitoring_mode_agent_api; then
+  kubectl -n lab-main wait --for=condition=Available deploy/edot-main-metrics-api --timeout=600s
+  kubectl -n lab-main wait --for=condition=Ready pod -l app.kubernetes.io/name=edot-main-logs-api --timeout=600s
 else
   kubectl -n lab-main rollout status deploy/edot-main-metrics --timeout=300s
   kubectl -n lab-main rollout status ds/edot-main-logs --timeout=300s
@@ -216,7 +216,7 @@ fi
 
 kubectl -n lab-main rollout status deploy/main-search-load --timeout=300s
 
-if monitoring_mode_autoops || monitoring_mode_contrib || monitoring_mode_agent_jwt; then
+if monitoring_mode_autoops || monitoring_mode_contrib || monitoring_mode_agent_api; then
   kubectl -n lab-monitoring rollout status deploy/edot-gateway --timeout=300s
 fi
 

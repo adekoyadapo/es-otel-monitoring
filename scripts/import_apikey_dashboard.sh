@@ -10,21 +10,21 @@ fi
 export HOST_IP
 
 if ! dashboard_import_supported; then
-  echo "Skipping JWT OTEL dashboard import for ES_VERSION ${ES_VERSION}; requires >= ${DASHBOARD_IMPORT_MIN_VERSION}"
+  echo "Skipping API key OTEL dashboard import for ES_VERSION ${ES_VERSION}; requires >= ${DASHBOARD_IMPORT_MIN_VERSION}"
   exit 0
 fi
 
-python3 ./scripts/build_otel_jwt_dashboard_ndjson.py >/dev/null
+python3 ./scripts/build_otel_apikey_dashboard_ndjson.py >/dev/null
 
-DASHBOARD_PATH="${JWT_DASHBOARD_PATH}"
-DASHBOARD_ID="${JWT_DASHBOARD_ID}"
+DASHBOARD_PATH="${APIKEY_DASHBOARD_PATH}"
+DASHBOARD_ID="${APIKEY_DASHBOARD_ID}"
 
 MONITORING_KIBANA_URL="https://kibana-monitoring.${HOST_IP}.sslip.io"
 
 RESPONSE_FILE="$(mktemp)"
 TMP_IMPORT_YAML="$(mktemp)"
 TMP_IMPORT_LOG="$(mktemp)"
-IMPORT_CM_NAME="jwt-dashboard-import-$(date +%s)"
+IMPORT_CM_NAME="apikey-dashboard-import-$(date +%s)"
 IMPORT_POD_NAME="${IMPORT_CM_NAME}"
 cleanup() {
   rm -f "${RESPONSE_FILE}" "${TMP_IMPORT_YAML}" "${TMP_IMPORT_LOG}"
@@ -90,7 +90,7 @@ if [[ -n "${HOST_IP}" ]]; then
   MONITORING_ELASTIC_PASSWORD="$(kubectl -n lab-monitoring get secret elasticsearch-monitoring-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d)"
 
   if [[ -z "${MONITORING_ELASTIC_PASSWORD}" ]]; then
-    echo "Unable to read monitoring Elasticsearch password for host-side JWT dashboard import" >&2
+    echo "Unable to read monitoring Elasticsearch password for host-side API key dashboard import" >&2
   else
     for _ in $(seq 1 3); do
       HTTP_CODE="$(
@@ -112,7 +112,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as fh:
 sys.exit(0 if data.get("success") else 1)
 PY
       then
-        echo "Imported JWT OTEL monitoring dashboard ${DASHBOARD_ID} into Kibana"
+        echo "Imported API key OTEL monitoring dashboard ${DASHBOARD_ID} into Kibana"
         exit 0
       fi
 
@@ -122,11 +122,11 @@ PY
 fi
 
 if import_via_cluster; then
-  echo "Imported JWT OTEL monitoring dashboard ${DASHBOARD_ID} into Kibana via in-cluster fallback"
+  echo "Imported API key OTEL monitoring dashboard ${DASHBOARD_ID} into Kibana via in-cluster fallback"
   exit 0
 fi
 
-echo "Failed to import JWT OTEL monitoring dashboard ${DASHBOARD_ID} into Kibana" >&2
+echo "Failed to import API key OTEL monitoring dashboard ${DASHBOARD_ID} into Kibana" >&2
 if [[ -s "${RESPONSE_FILE}" ]]; then
   cat "${RESPONSE_FILE}" >&2
 fi

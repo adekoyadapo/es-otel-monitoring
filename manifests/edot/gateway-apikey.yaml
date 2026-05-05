@@ -1,0 +1,159 @@
+# Gateway for the API key monitoring workflow.
+# Validation — run before deploying to confirm the monitoring cluster API key works:
+#   curl -sk -H "Authorization: ApiKey <encoded>" \
+#     https://elasticsearch-monitoring-es-http.lab-monitoring.svc.cluster.local:9200/_cluster/health
+#
+# To switch to an OTLP endpoint instead of Elasticsearch, see the
+# "Switching the Gateway to an OTLP Endpoint" section in agent-otel-apikey.md.
+apiVersion: v1
+kind: Service
+metadata:
+  name: edot-gateway
+  namespace: lab-monitoring
+spec:
+  selector:
+    app.kubernetes.io/name: edot-gateway
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edot-gateway-config
+  namespace: lab-monitoring
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 512
+      resource/main:
+        attributes:
+          - key: data_stream.namespace
+            action: upsert
+            value: main
+          - key: orchestrator.cluster.name
+            action: upsert
+            value: edot-lab
+      batch:
+        send_batch_size: 1024
+        timeout: 5s
+      batch/metrics:
+        send_batch_max_size: 0
+        timeout: 5s
+
+    exporters:
+      elasticsearch/monitoring:
+        endpoints:
+          - ${env:MONITORING_ES_ENDPOINT}
+        headers:
+          Authorization: ApiKey ${env:MONITORING_ES_API_KEY}
+        mapping:
+          mode: otel
+        metrics_index: metrics-elasticsearch.stack_monitoring.otel-main
+        logs_index: logs-elasticsearch.logs.otel-main
+        tls:
+          ca_file: /etc/edot/certs/ca.crt
+          # If the monitoring cluster uses a private CA, mount it above and set ca_file.
+          # For dev/test with self-signed certs you can add: insecure_skip_verify: true
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, resource/main, batch]
+          exporters: [elasticsearch/monitoring]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, resource/main, batch/metrics]
+          exporters: [elasticsearch/monitoring]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edot-gateway
+  namespace: lab-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: edot-gateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: edot-gateway
+    spec:
+      containers:
+        - name: edot-gateway
+          image: docker.elastic.co/elastic-agent/elastic-agent:__ELASTIC_AGENT_VERSION__
+          args: ["--config=/etc/edot/config.yaml"]
+          env:
+            - name: ELASTIC_AGENT_OTEL
+              value: "true"
+            - name: MONITORING_ES_ENDPOINT
+              value: https://elasticsearch-monitoring-es-http.lab-monitoring.svc.cluster.local:9200
+            - name: MONITORING_ES_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: es-creds-monitoring-cluster
+                  key: api_key
+          ports:
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+            - containerPort: 13133
+              name: health
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          livenessProbe:
+            httpGet:
+              path: /health/status
+              port: 13133
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/edot
+            - name: root-ca
+              mountPath: /etc/edot/certs
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: edot-gateway-config
+        - name: root-ca
+          secret:
+            secretName: edot-root-ca

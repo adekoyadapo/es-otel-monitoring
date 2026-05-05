@@ -14,14 +14,11 @@
 : "${EDOT_MONITORING_MODE:=autoops}"
 : "${OTEL_CONTRIB_COLLECTOR_VERSION:=0.148.0}"
 : "${ELASTIC_AGENT_VERSION:=${ES_VERSION}}"
-: "${JWT_TEST_REALM_NAME:=jwt1}"
-: "${JWT_TEST_ISSUER:=edot-jwt-test}"
-: "${JWT_TEST_AUDIENCE:=edot-jwt-test}"
-: "${JWT_TEST_PRINCIPAL:=edot-jwt-monitor}"
-: "${JWT_TEST_ROLE_NAME:=edot_jwt_monitor}"
-: "${JWT_TEST_ROLE_MAPPING_NAME:=edot_jwt_monitor_mapping}"
-: "${JWT_TEST_KEY_ID:=edot-jwt-hs256}"
-: "${JWT_TEST_SECRET_NAME:=elasticsearch-main-jwt-secure-settings}"
+: "${EXTRA_CLUSTER:=false}"
+: "${EXTRA_CLUSTER_NAME:=elasticsearch-extra}"
+: "${EXTRA_CLUSTER_NAMESPACE:=lab-extra}"
+: "${APIKEY_ROLE_NAME:=edot_apikey_monitor}"
+: "${APIKEY_INGEST_ROLE_NAME:=edot_apikey_ingest}"
 
 AUTOOPS_DASHBOARD_ID="otel-elasticsearch-monitoring-main"
 AUTOOPS_DASHBOARD_PATH="dashboards/elasticsearch-otel-monitoring-main.ndjson"
@@ -29,8 +26,8 @@ AGENT_DASHBOARD_ID="otel-elasticsearch-monitoring-agent"
 AGENT_DASHBOARD_PATH="dashboards/elasticsearch-otel-monitoring-agent.ndjson"
 CONTRIB_DASHBOARD_ID="otel-elasticsearch-monitoring-contrib"
 CONTRIB_DASHBOARD_PATH="dashboards/elasticsearch-otel-monitoring-contrib.ndjson"
-JWT_DASHBOARD_ID="otel-elasticsearch-monitoring-jwt"
-JWT_DASHBOARD_PATH="dashboards/elasticsearch-otel-monitoring-jwt.ndjson"
+APIKEY_DASHBOARD_ID="otel-elasticsearch-monitoring-apikey"
+APIKEY_DASHBOARD_PATH="dashboards/elasticsearch-otel-monitoring-apikey.ndjson"
 AUTOOPS_DERIVED_TSDS="metrics-elasticsearch.autoops-main"
 AUTOOPS_SOURCE_DATASTREAM="logs-elasticsearch.metrics-main"
 AGENT_METRICS_DATASTREAM_PATTERN="metrics-elasticsearch.stack_monitoring.*-main"
@@ -38,8 +35,8 @@ AGENT_METRICS_DATASTREAM_TARGET="metrics-elasticsearch.stack_monitoring.*-main,-
 AGENT_LOGS_DATASTREAM_PATTERN="logs-elasticsearch.server-main"
 CONTRIB_METRICS_DATASTREAM="metrics-elasticsearch.stack_monitoring.otel-main"
 CONTRIB_LOGS_DATASTREAM="logs-elasticsearch.logs.otel-main"
-JWT_METRICS_DATASTREAM="metrics-elasticsearch.stack_monitoring.otel-main"
-JWT_LOGS_DATASTREAM="logs-elasticsearch.logs.otel-main"
+APIKEY_METRICS_DATASTREAM="metrics-elasticsearch.stack_monitoring.otel-main"
+APIKEY_LOGS_DATASTREAM="logs-elasticsearch.logs.otel-main"
 : "${SEARCH_LOAD_STREAM_PREFIX:=logs-sampleapp}"
 : "${SEARCH_LOAD_STREAM_NAMESPACE:=default}"
 : "${SEARCH_LOAD_STREAM_COUNT:=5}"
@@ -81,19 +78,23 @@ monitoring_mode_agent() {
   [[ "${EDOT_MONITORING_MODE}" == "agent" ]]
 }
 
-monitoring_mode_agent_jwt() {
-  [[ "${EDOT_MONITORING_MODE}" == "agent-jwt" ]]
+monitoring_mode_agent_api() {
+  [[ "${EDOT_MONITORING_MODE}" == "agent-api" ]]
 }
 
 monitoring_mode_contrib() {
   [[ "${EDOT_MONITORING_MODE}" == "contrib" ]]
 }
 
+extra_cluster_enabled() {
+  [[ "${EXTRA_CLUSTER}" == "true" ]]
+}
+
 validate_monitoring_mode() {
   case "${EDOT_MONITORING_MODE}" in
-    autoops|agent|agent-jwt|contrib) ;;
+    autoops|agent|agent-api|contrib) ;;
     *)
-      echo "Unsupported EDOT_MONITORING_MODE: ${EDOT_MONITORING_MODE}. Use autoops, agent, agent-jwt, or contrib." >&2
+      echo "Unsupported EDOT_MONITORING_MODE: ${EDOT_MONITORING_MODE}. Use autoops, agent, agent-api, or contrib." >&2
       return 1
       ;;
   esac
@@ -104,8 +105,8 @@ current_dashboard_id() {
     printf '%s\n' "${CONTRIB_DASHBOARD_ID}"
   elif monitoring_mode_agent; then
     printf '%s\n' "${AGENT_DASHBOARD_ID}"
-  elif monitoring_mode_agent_jwt; then
-    printf '%s\n' "${JWT_DASHBOARD_ID}"
+  elif monitoring_mode_agent_api; then
+    printf '%s\n' "${APIKEY_DASHBOARD_ID}"
   else
     printf '%s\n' "${AUTOOPS_DASHBOARD_ID}"
   fi
@@ -116,8 +117,8 @@ current_dashboard_path() {
     printf '%s\n' "${CONTRIB_DASHBOARD_PATH}"
   elif monitoring_mode_agent; then
     printf '%s\n' "${AGENT_DASHBOARD_PATH}"
-  elif monitoring_mode_agent_jwt; then
-    printf '%s\n' "${JWT_DASHBOARD_PATH}"
+  elif monitoring_mode_agent_api; then
+    printf '%s\n' "${APIKEY_DASHBOARD_PATH}"
   else
     printf '%s\n' "${AUTOOPS_DASHBOARD_PATH}"
   fi
@@ -136,22 +137,19 @@ export DASHBOARD_IMPORT_MIN_VERSION
 export EDOT_MONITORING_MODE
 export OTEL_CONTRIB_COLLECTOR_VERSION
 export ELASTIC_AGENT_VERSION
-export JWT_TEST_REALM_NAME
-export JWT_TEST_ISSUER
-export JWT_TEST_AUDIENCE
-export JWT_TEST_PRINCIPAL
-export JWT_TEST_ROLE_NAME
-export JWT_TEST_ROLE_MAPPING_NAME
-export JWT_TEST_KEY_ID
-export JWT_TEST_SECRET_NAME
+export EXTRA_CLUSTER
+export EXTRA_CLUSTER_NAME
+export EXTRA_CLUSTER_NAMESPACE
+export APIKEY_ROLE_NAME
+export APIKEY_INGEST_ROLE_NAME
 export AUTOOPS_DASHBOARD_ID
 export AUTOOPS_DASHBOARD_PATH
 export AGENT_DASHBOARD_ID
 export AGENT_DASHBOARD_PATH
 export CONTRIB_DASHBOARD_ID
 export CONTRIB_DASHBOARD_PATH
-export JWT_DASHBOARD_ID
-export JWT_DASHBOARD_PATH
+export APIKEY_DASHBOARD_ID
+export APIKEY_DASHBOARD_PATH
 export AUTOOPS_DERIVED_TSDS
 export AUTOOPS_SOURCE_DATASTREAM
 export AGENT_METRICS_DATASTREAM_PATTERN
@@ -159,8 +157,8 @@ export AGENT_METRICS_DATASTREAM_TARGET
 export AGENT_LOGS_DATASTREAM_PATTERN
 export CONTRIB_METRICS_DATASTREAM
 export CONTRIB_LOGS_DATASTREAM
-export JWT_METRICS_DATASTREAM
-export JWT_LOGS_DATASTREAM
+export APIKEY_METRICS_DATASTREAM
+export APIKEY_LOGS_DATASTREAM
 export SEARCH_LOAD_STREAM_PREFIX
 export SEARCH_LOAD_STREAM_NAMESPACE
 export SEARCH_LOAD_STREAM_COUNT

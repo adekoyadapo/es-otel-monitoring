@@ -27,12 +27,21 @@ DS_RESP="$(curl -sk -u "elastic:${MAIN_ELASTIC_PASSWORD}" \
   -X DELETE "https://127.0.0.1:19201/_data_stream/${STREAM_PATTERN}")"
 echo "Data streams deleted: ${DS_RESP}"
 
-# Delete any regular indices that match the pattern (fallback for non-datastream writes)
-IDX_RESP="$(curl -sk -u "elastic:${MAIN_ELASTIC_PASSWORD}" \
-  -X DELETE "https://127.0.0.1:19201/${STREAM_PATTERN}" 2>/dev/null || true)"
-if [[ "${IDX_RESP}" != *'"acknowledged":true'* ]] && [[ "${IDX_RESP}" != *'index_not_found'* ]]; then
-  echo "Index cleanup: ${IDX_RESP}"
-fi
+# Delete any regular indices that match the pattern (fallback for non-datastream writes).
+# ES 9.x blocks wildcard DELETE on indices when action.destructive_requires_name=true,
+# so we list indices first and delete only matching ones individually.
+while IFS= read -r idx; do
+  [[ -z "${idx}" ]] && continue
+  IDX_RESP="$(curl -sk -u "elastic:${MAIN_ELASTIC_PASSWORD}" \
+    -X DELETE "https://127.0.0.1:19201/${idx}" 2>/dev/null || true)"
+  if [[ "${IDX_RESP}" == *'"acknowledged":true'* ]]; then
+    echo "Index cleanup: deleted ${idx}"
+  else
+    echo "Index cleanup: failed to delete ${idx}: ${IDX_RESP}" >&2
+  fi
+done < <(curl -sk -u "elastic:${MAIN_ELASTIC_PASSWORD}" \
+  "https://127.0.0.1:19201/_cat/indices/${STREAM_PATTERN}?h=index&format=text&ignore_unavailable=true" 2>/dev/null \
+  | grep -v '^$' || true)
 
 # Delete the index template
 TMPL_RESP="$(curl -sk -u "elastic:${MAIN_ELASTIC_PASSWORD}" \

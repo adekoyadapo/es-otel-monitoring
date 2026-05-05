@@ -1,0 +1,138 @@
+# Validation — run before deploying to confirm the API key works against the source cluster:
+#   curl -sk -H "Authorization: ApiKey <encoded>" \
+#     https://elasticsearch-main-es-http.lab-main.svc.cluster.local:9200/_cluster/health
+#
+# The encoded API key is the value stored in the es-creds-source-cluster secret (api_key key).
+# Created by deploy_agent_api.sh; rotate by re-running that script with a fresh key.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edot-main-metrics-api-config
+  namespace: lab-main
+data:
+  config.yaml: |
+    receivers:
+      elasticsearch:
+        collection_interval: 10s
+        initial_delay: 1s
+        endpoint: https://elasticsearch-main-es-http.lab-main.svc.cluster.local:9200
+        nodes: ["_all"]
+        indices: ["_all"]
+        tls:
+          ca_file: /etc/otel/certs/ca.crt
+        auth:
+          authenticator: headers_setter
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+      headers_setter:
+        headers:
+          - action: insert
+            key: Authorization
+            value: ApiKey ${env:ES_SOURCE_API_KEY}
+
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 256
+      resource/main:
+        attributes:
+          - key: data_stream.type
+            value: metrics
+            action: upsert
+          - key: data_stream.dataset
+            value: elasticsearch.stack_monitoring
+            action: upsert
+          - key: data_stream.namespace
+            value: main
+            action: upsert
+          - key: elasticsearch.cluster.name
+            value: main
+            action: upsert
+          - key: service.name
+            value: elasticsearch-main
+            action: upsert
+          - key: service.namespace
+            value: lab-main
+            action: upsert
+          - key: orchestrator.cluster.name
+            value: edot-lab
+            action: upsert
+      batch:
+        send_batch_size: 1024
+        send_batch_max_size: 2048
+        timeout: 5s
+
+    exporters:
+      otlp_grpc/gateway:
+        endpoint: edot-gateway.lab-monitoring.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+    service:
+      extensions: [health_check, headers_setter]
+      pipelines:
+        metrics:
+          receivers: [elasticsearch]
+          processors: [memory_limiter, resource/main, batch]
+          exporters: [otlp_grpc/gateway]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edot-main-metrics-api
+  namespace: lab-main
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: edot-main-metrics-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: edot-main-metrics-api
+    spec:
+      containers:
+        - name: edot-main-metrics-api
+          image: otel/opentelemetry-collector-contrib:__OTEL_CONTRIB_COLLECTOR_VERSION__
+          args: ["--config=/etc/otel/config.yaml"]
+          env:
+            - name: ES_SOURCE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: es-creds-source-cluster
+                  key: api_key
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otel/config.yaml
+              subPath: config.yaml
+            - name: root-ca
+              mountPath: /etc/otel/certs
+              readOnly: true
+          ports:
+            - containerPort: 13133
+              name: health
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          livenessProbe:
+            httpGet:
+              path: /health/status
+              port: 13133
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: edot-main-metrics-api-config
+        - name: root-ca
+          secret:
+            secretName: edot-root-ca
